@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CinemaMode</title>
+</head>
+<body>
+    <div data-role="page" class="page type-interior pluginConfigurationPage cinemaModeConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
+        <div data-role="content">
+            <div class="content-primary">
+                <form class="cinemaModeConfigurationPage">
+                    <div class="sectionTitleContainer flex align-items-center">
+                        <h2 class="sectionTitle">Cinema Mode</h2>
+                        <a is="emby-linkbutton" class="raised button-alt headerHelpButton emby-button" target="_blank" href="https://jellyfin.org">Help</a>
+                    </div>
+                    <div class="verticalSection">
+                        <p>This plugin does stuff... blah blah blah</p>
+                        <br/>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="trailer-prerolls">Trailer Pre-Rolls Folder</label>
+                        <input type="string" id="trailer-prerolls" name="trailer-prerolls" is="emby-input"/>
+                        <div class="fieldDescription">
+                            Specify the folder containing trailer pre-roll videos. One video from this folder will be chosen at random to play before the trailers start. Leave this field blank to play no pre-roll before the trailers. 
+                        </div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="feature-prerolls">Feature Pre-Rolls Folder</label>
+                        <input type="string" id="feature-prerolls" name="feature-prerolls" is="emby-input"/>
+                        <div class="fieldDescription">
+                            Specify the folder containing feature pre-roll videos. One video from this folder will be chosen at random to play before the feature presentation. Leave this field blank to play no pre-roll before the feature presentation. 
+                        </div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="number-trailers">Number of Trailers</label>
+                        <input type="number" id="number-trailers" name="number-trailers" is="emby-input"/>
+                        <div class="fieldDescription">
+                            Specify the number of trailers to play.
+                        </div>
+                    </div>
+                    <br/>
+                    <button is="emby-button" type="button" class="raised block" id="scan-prerolls"><span>Scan Pre</span></button>
+                    <button is="emby-button" type="submit" class="raised button-submit block"><span>${Save}</span></button>
+                </form>
+            </div>
+        </div>
+        <script type="text/javascript">
+            var pluginId = "5fcefe1b-df1f-4596-ac57-f2f939c294c5";
+
+            $('.cinemaModeConfigurationPage').on('pageshow', function () {
+                Dashboard.showLoadingMsg();
+                var page = this;
+                ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                    $('#trailer-prerolls', page).val(config.TrailerPreRollsPath);
+                    $('#feature-prerolls', page).val(config.FeaturePreRollsPath);
+                    $('#number-trailers', page).val(config.NumberOfTrailers);
+                    Dashboard.hideLoadingMsg();
+                });
+            });
+
+            $('.cinemaModeConfigurationPage').on('submit', function () {
+                Dashboard.showLoadingMsg();
+
+                var TrailerPreRollsPath = $('#trailer-prerolls').val();
+                var FeaturePreRollsPath = $('#feature-prerolls').val();
+                var NumberOfTrailers = $('#number-trailers').val();
+                ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                    config.TrailerPreRollsPath = TrailerPreRollsPath;
+                    config.FeaturePreRollsPath = FeaturePreRollsPath;
+                    config.NumberOfTrailers = parseInt(NumberOfTrailers);
+
+                    ApiClient.updatePluginConfiguration(pluginId, config).then(Dashboard.processPluginConfigurationUpdateResult);
+                });
+
+                return false;
+            });
+            // $('#rscan-prerolls').on('click', function () {
+            //     var request = {
+            //         url: ApiClient.getUrl('CinemaMode/Scan'),
+            //         type: 'POST'
+            //     };
+
+            //     ApiClient.fetch(request).then(function () {
+            //         Dashboard.alert("Library scan queued");
+            //     }).catch(function () {
+            //         Dashboard.alert({
+            //             message: "Unexpected error occurred!"
+            //         });
+            //     });
+            // });
+        </script>
+    </div>
+</body>
+</html>

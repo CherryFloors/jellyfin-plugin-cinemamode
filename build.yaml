@@ -1,0 +1,14 @@
+name: 'Cinema Mode'
+guid: '5fcefe1b-df1f-4596-ac57-f2f939c294c5'
+version: '0.1.0.0'
+targetAbi: '10.8.0.0'
+framework: 'net6.0'
+owner: 'CherryFloors'
+overview: 'Play trailers'
+description: >
+  Play trailers.
+category: 'Other'
+artifacts:
+- 'Jellyfin.Plugin.CinemaMode.dll'
+changelog: >
+  Initial Release
