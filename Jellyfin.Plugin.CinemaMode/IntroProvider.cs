@@ -13,10 +13,7 @@ namespace Jellyfin.Plugin.CinemaMode
 
         public Task<IEnumerable<IntroInfo>> GetIntros(BaseItem item, User user)
         {
-            // Check user configuration for cinema mode
-            // Not sure where to access this yet
-    
-            // Check item type, for now just pre roll movies
+           // Check item type, for now just pre roll movies
             if (item is not MediaBrowser.Controller.Entities.Movies.Movie) 
             {
                 return Task.FromResult(Enumerable.Empty<IntroInfo>());
