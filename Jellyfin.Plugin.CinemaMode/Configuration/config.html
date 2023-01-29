@@ -20,7 +20,7 @@
                         <label class="inputLabel inputLabelUnfocused" for="trailer-prerolls">Trailer Pre-Rolls Folder</label>
                         <input type="string" id="trailer-prerolls" name="trailer-prerolls" is="emby-input"/>
                         <div class="fieldDescription">
-                            Specify location of trailer pre-roll videos. One random video from here will play before the trailers start.
+                            Specify location of trailer pre-roll videos. 
                         </div>
                     </div>
                     <div class="inputContainer">
@@ -37,8 +37,25 @@
                             Specify the number of trailers to play.
                         </div>
                     </div>
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label>
+                            <input is="emby-checkbox" type="checkbox" id="enable-trailer-preroll" name="enable-trailer-preroll" />
+                            <span>Enable trailer pre-roll</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">
+                            One random trailer pre-roll video will play before the trailers start.
+                        </div>
+                    </div>
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label>
+                            <input is="emby-checkbox" type="checkbox" id="enable-feature-preroll" name="enable-feature-preroll" />
+                            <span>Enable feature pre-roll</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">
+                            One random feature pre-roll video will play before the feature presentation starts.
+                        </div>
+                    </div>
                     <br/>
-                    <button is="emby-button" type="button" class="raised block" id="scan-prerolls"><span>Scan Pre</span></button>
                     <button is="emby-button" type="submit" class="raised button-submit block"><span>${Save}</span></button>
                 </form>
             </div>
@@ -53,6 +70,8 @@
                     $('#trailer-prerolls', page).val(config.TrailerPreRollsPath);
                     $('#feature-prerolls', page).val(config.FeaturePreRollsPath);
                     $('#number-trailers', page).val(config.NumberOfTrailers);
+                    document.getElementById('enable-trailer-preroll').checked = config.EnableTrailerPreroll;
+                    document.getElementById('enable-feature-preroll').checked = config.EnableFeaturePreroll;
                     Dashboard.hideLoadingMsg();
                 });
             });
@@ -64,29 +83,18 @@
                 var FeaturePreRollsPath = $('#feature-prerolls').val();
                 var NumberOfTrailers = $('#number-trailers').val();
                 ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+
                     config.TrailerPreRollsPath = TrailerPreRollsPath;
                     config.FeaturePreRollsPath = FeaturePreRollsPath;
                     config.NumberOfTrailers = parseInt(NumberOfTrailers);
+                    config.EnableTrailerPreroll = document.getElementById('enable-trailer-preroll').checked;
+                    config.EnableFeaturePreroll = document.getElementById('enable-feature-preroll').checked;
 
                     ApiClient.updatePluginConfiguration(pluginId, config).then(Dashboard.processPluginConfigurationUpdateResult);
                 });
 
                 return false;
             });
-            // $('#rscan-prerolls').on('click', function () {
-            //     var request = {
-            //         url: ApiClient.getUrl('CinemaMode/Scan'),
-            //         type: 'POST'
-            //     };
-
-            //     ApiClient.fetch(request).then(function () {
-            //         Dashboard.alert("Library scan queued");
-            //     }).catch(function () {
-            //         Dashboard.alert({
-            //             message: "Unexpected error occurred!"
-            //         });
-            //     });
-            // });
         </script>
     </div>
 </body>
