@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Jellyfin.Data.Entities;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Library;
 using Jellyfin.Data.Enums;
+
+#nullable enable
 
 namespace Jellyfin.Plugin.CinemaMode
 {
@@ -33,39 +34,64 @@ namespace Jellyfin.Plugin.CinemaMode
             }
 
             // Get trailers and id to exculsion list
-            Movie movie = movies.ElementAt(_random.Next(movies.Count)) as Movie;
+            Movie? movie = movies.ElementAt(_random.Next(movies.Count)) as Movie;
+            if (movie is null)
+            {
+                return null;
+            }
+            
             exclusion_list.Add(movie.Id);
             IReadOnlyList<BaseItem> localTrailers = movie.LocalTrailers;
             return localTrailers.ElementAt(_random.Next(localTrailers.Count));
         }
 
-        public BaseItem? GetRandomPreRoll(string preRollChannelName)
+        public BaseItem? GetRandomPreRoll(string preRollChannelPath, string preRollChannelName)
         {
-            // Query movies
-            InternalItemsQuery q = new InternalItemsQuery();
-            q.Name = preRollChannelName;
-            q.IncludeItemTypes = new BaseItemKind[] { BaseItemKind.Channel };
-            IReadOnlyCollection<BaseItem> preRollChannel = Plugin.LibraryManager.GetItemList(q);
-
-            // Check for no results
-            if (preRollChannel.Count == 0)
+            try
             {
+                // Get pre rolls paths
+                string[] preRollPaths = System.IO.Directory.GetFiles(preRollChannelPath);
+
+                // If no paths, take early exit
+                if (preRollPaths.Count() == 0)
+                {
+                    return null;
+                }
+
+                // Get chennel
+                InternalItemsQuery q = new InternalItemsQuery();
+                q.Name = preRollChannelName;
+                q.IncludeItemTypes = new BaseItemKind[] { BaseItemKind.Folder };
+                IReadOnlyCollection<BaseItem> preRollChannel = Plugin.LibraryManager.GetItemList(q);
+
+                // Check for no results
+                if (preRollChannel.Count != 1)
+                {
+                    return null;
+                }
+
+                // Get pre rolls in that channel
+                InternalItemsQuery q2 = new InternalItemsQuery();
+                q2.ParentId = preRollChannel.ElementAt(0).Id;
+                q2.IncludeItemTypes = new BaseItemKind[] { BaseItemKind.Video };
+                IReadOnlyCollection<BaseItem> preRolls = Plugin.LibraryManager.GetItemList(q2);
+
+                // Filter out matches without bitrate and file path doesnt exist
+                IEnumerable<BaseItem> goodPreRolls = preRolls.Where(p => p.TotalBitrate != null).Where(p => preRollPaths.Contains(p.Path));
+                if (goodPreRolls.Count() == 0)
+                {
+                    return null;
+                }
+
+                // Return a random
+                return goodPreRolls.ElementAt(_random.Next(goodPreRolls.Count()));
+            }
+            catch (System.Exception)
+            {
+                // likely a file permission error, default to none
                 return null;
             }
-
-            // Check for multiple
-            if (preRollChannel.Count > 1)
-            {
-                return null;
-            }
-
-            // Get pre rolls in that channel
-            InternalItemsQuery q2 = new InternalItemsQuery();
-            q2.TopParentIds = new Guid[] { preRollChannel.ElementAt(0).Id };
-            q2.IncludeItemTypes = new BaseItemKind[] { BaseItemKind.Video };
-            IReadOnlyCollection<BaseItem> preRolls = Plugin.LibraryManager.GetItemList(q2);
             
-            return preRolls.ElementAt(_random.Next(preRolls.Count));
         }
 
         public IEnumerable<IntroInfo> Get(BaseItem item, User user)
@@ -73,7 +99,7 @@ namespace Jellyfin.Plugin.CinemaMode
             // Return trailer pre roll
             if (Plugin.Instance.Configuration.EnableTrailerPreroll) 
             {
-                BaseItem? b = GetRandomPreRoll(Plugin.Instance.Configuration.TrailerPreRollsChannelName);
+                BaseItem? b = GetRandomPreRoll(Plugin.Instance.Configuration.TrailerPreRollsPath, Plugin.Instance.Configuration.TrailerPreRollsChannelName);
                 if (b != null)
                 {
                     yield return new IntroInfo { ItemId = b.Id, Path = b.Path };
@@ -114,7 +140,7 @@ namespace Jellyfin.Plugin.CinemaMode
             // Return feature pre roll
             if (Plugin.Instance.Configuration.EnableFeaturePreroll) 
             {
-                BaseItem? b = GetRandomPreRoll(Plugin.Instance.Configuration.FeaturePreRollsChannelName);
+                BaseItem? b = GetRandomPreRoll(Plugin.Instance.Configuration.FeaturePreRollsPath, Plugin.Instance.Configuration.FeaturePreRollsChannelName);
                 if (b != null)
                 {
                     yield return new IntroInfo { ItemId = b.Id, Path = b.Path };
@@ -123,3 +149,4 @@ namespace Jellyfin.Plugin.CinemaMode
         }
     }
 }
+#nullable disable

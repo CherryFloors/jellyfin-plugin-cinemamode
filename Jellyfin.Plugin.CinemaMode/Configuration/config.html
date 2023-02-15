@@ -10,24 +10,30 @@
                 <form class="cinemaModeConfigurationPage">
                     <div class="sectionTitleContainer flex align-items-center">
                         <h2 class="sectionTitle">Cinema Mode</h2>
-                        <a is="emby-linkbutton" class="raised button-alt headerHelpButton emby-button" target="_blank" href="https://jellyfin.org">Help</a>
+                        <a is="emby-linkbutton" class="raised button-alt headerHelpButton emby-button" target="_blank" href="https://github.com/CherryFloors/jellyfin-plugin-cinemamode#user-guide">Help</a>
                     </div>
                     <div class="verticalSection">
-                        <p>This plugin does stuff... blah blah blah</p>
+                        <p>
+                            This plugin allows users to enable Jellyfin's Cinema Mode functionality with local trailers and pre-rolls. 
+                            The system admin can configure a set number of trailers to play before a movie. In addition, pre-roll videos 
+                            can be played before and after the block of trailers. All of this can be disabled at the user level by turning 
+                            off Cinema Mode in the users Playback settings. For more information, access the user guide via the above help
+                            button. Pro tip: Skip any pre-roll or trailer by pressing the next button in the player.
+                        </p>
                         <br/>
                     </div>
                     <div class="inputContainer">
                         <label class="inputLabel inputLabelUnfocused" for="trailer-prerolls">Trailer Pre-Rolls Folder</label>
                         <input type="string" id="trailer-prerolls" name="trailer-prerolls" is="emby-input"/>
                         <div class="fieldDescription">
-                            Specify location of trailer pre-roll videos. 
+                            Specify location of trailer pre-roll videos. (Should contain only videso, no subdirectories) 
                         </div>
                     </div>
                     <div class="inputContainer">
                         <label class="inputLabel inputLabelUnfocused" for="feature-prerolls">Feature Pre-Rolls Folder</label>
                         <input type="string" id="feature-prerolls" name="feature-prerolls" is="emby-input"/>
                         <div class="fieldDescription">
-                            Specify location of feature pre-roll videos. One random video from here will play before the feature presentation. 
+                            Specify location of feature pre-roll videos. (Should contain only videso, no subdirectories) 
                         </div>
                     </div>
                     <div class="inputContainer">

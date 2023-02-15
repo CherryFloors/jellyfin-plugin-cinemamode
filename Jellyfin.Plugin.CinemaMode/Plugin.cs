@@ -21,8 +21,6 @@ namespace Jellyfin.Plugin.CinemaMode
 
         public PluginConfiguration PluginConfiguration => Configuration;
 
-        public static IApplicationPaths ApplicationPaths { get; private set; }
-
         public static IServerApplicationPaths ServerApplicationPaths { get; private set; }
 
         public static ILibraryManager LibraryManager { get; private set; }
@@ -32,12 +30,9 @@ namespace Jellyfin.Plugin.CinemaMode
             : base(applicationPaths, xmlSerializer)
         {
             Instance = this;
-
-            ApplicationPaths = applicationPaths;
             LibraryManager = libraryManager;
             ServerApplicationPaths = serverApplicationPaths;
             ChannelManager = channelManager;
-
         }
 
         public IEnumerable<PluginPageInfo> GetPages()
