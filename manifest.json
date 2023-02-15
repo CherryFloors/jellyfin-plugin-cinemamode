@@ -1,0 +1,11 @@
+[
+    {
+        "category": "General",
+        "guid": "5fcefe1b-df1f-4596-ac57-f2f939c294c5",
+        "name": "Cinema Mode",
+        "description": "Enable Cinema Mode with local trailers and pre-rolls.",
+        "owner": "CherryFloors",
+        "overview": "Enable Jellyfin's Cinema Mode",
+        "versions": []
+    }
+]

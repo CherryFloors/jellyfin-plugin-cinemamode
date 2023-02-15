@@ -1,0 +1,11 @@
+# build
+bin
+obj
+artifacts
+
+# ide
+.idea
+.vs
+
+# dev
+build.sh

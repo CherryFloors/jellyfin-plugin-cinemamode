@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CinemaMode</title>
+</head>
+<body>
+    <div data-role="page" class="page type-interior pluginConfigurationPage cinemaModeConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
+        <div data-role="content">
+            <div class="content-primary">
+                <form class="cinemaModeConfigurationPage">
+                    <div class="sectionTitleContainer flex align-items-center">
+                        <h2 class="sectionTitle">Cinema Mode</h2>
+                        <a is="emby-linkbutton" class="raised button-alt headerHelpButton emby-button" target="_blank" href="https://github.com/CherryFloors/jellyfin-plugin-cinemamode#user-guide">Help</a>
+                    </div>
+                    <div class="verticalSection">
+                        <p>
+                            This plugin allows users to enable Jellyfin's Cinema Mode functionality with local trailers and pre-rolls. 
+                            The system admin can configure a set number of trailers to play before a movie. In addition, pre-roll videos 
+                            can be played before and after the block of trailers. All of this can be disabled at the user level by turning 
+                            off Cinema Mode in the users Playback settings. For more information, access the user guide via the above help
+                            button. Pro tip: Skip any pre-roll or trailer by pressing the next button in the player.
+                        </p>
+                        <br/>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="trailer-prerolls">Trailer Pre-Rolls Folder</label>
+                        <input type="string" id="trailer-prerolls" name="trailer-prerolls" is="emby-input"/>
+                        <div class="fieldDescription">
+                            Specify location of trailer pre-roll videos. (Should contain only videso, no subdirectories) 
+                        </div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="feature-prerolls">Feature Pre-Rolls Folder</label>
+                        <input type="string" id="feature-prerolls" name="feature-prerolls" is="emby-input"/>
+                        <div class="fieldDescription">
+                            Specify location of feature pre-roll videos. (Should contain only videso, no subdirectories) 
+                        </div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="number-trailers">Number of Trailers</label>
+                        <input type="number" id="number-trailers" name="number-trailers" is="emby-input"/>
+                        <div class="fieldDescription">
+                            Specify the number of trailers to play.
+                        </div>
+                    </div>
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label>
+                            <input is="emby-checkbox" type="checkbox" id="enable-trailer-preroll" name="enable-trailer-preroll" />
+                            <span>Enable trailer pre-roll</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">
+                            One random trailer pre-roll video will play before the trailers start.
+                        </div>
+                    </div>
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label>
+                            <input is="emby-checkbox" type="checkbox" id="enable-feature-preroll" name="enable-feature-preroll" />
+                            <span>Enable feature pre-roll</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">
+                            One random feature pre-roll video will play before the feature presentation starts.
+                        </div>
+                    </div>
+                    <br/>
+                    <button is="emby-button" type="submit" class="raised button-submit block"><span>${Save}</span></button>
+                </form>
+            </div>
+        </div>
+        <script type="text/javascript">
+            var pluginId = "5fcefe1b-df1f-4596-ac57-f2f939c294c5";
+
+            $('.cinemaModeConfigurationPage').on('pageshow', function () {
+                Dashboard.showLoadingMsg();
+                var page = this;
+                ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                    $('#trailer-prerolls', page).val(config.TrailerPreRollsPath);
+                    $('#feature-prerolls', page).val(config.FeaturePreRollsPath);
+                    $('#number-trailers', page).val(config.NumberOfTrailers);
+                    document.getElementById('enable-trailer-preroll').checked = config.EnableTrailerPreroll;
+                    document.getElementById('enable-feature-preroll').checked = config.EnableFeaturePreroll;
+                    Dashboard.hideLoadingMsg();
+                });
+            });
+
+            $('.cinemaModeConfigurationPage').on('submit', function () {
+                Dashboard.showLoadingMsg();
+
+                var TrailerPreRollsPath = $('#trailer-prerolls').val();
+                var FeaturePreRollsPath = $('#feature-prerolls').val();
+                var NumberOfTrailers = $('#number-trailers').val();
+                ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+
+                    config.TrailerPreRollsPath = TrailerPreRollsPath;
+                    config.FeaturePreRollsPath = FeaturePreRollsPath;
+                    config.NumberOfTrailers = parseInt(NumberOfTrailers);
+                    config.EnableTrailerPreroll = document.getElementById('enable-trailer-preroll').checked;
+                    config.EnableFeaturePreroll = document.getElementById('enable-feature-preroll').checked;
+
+                    ApiClient.updatePluginConfiguration(pluginId, config).then(Dashboard.processPluginConfigurationUpdateResult);
+                });
+
+                return false;
+            });
+        </script>
+    </div>
+</body>
+</html>
