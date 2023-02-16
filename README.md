@@ -2,7 +2,7 @@
 <h3 align="center">Plugin for the <a href="https://jellyfin.org">Jellyfin Project</a></h3>
 
 <p align="center">
-<img alt="Plugin Banner" src="Jellyfin.Plugin.CinemaMode/Images/jellyfin-plugin-cinemamode.png"/>
+<img alt="Plugin Banner" src="Jellyfin.Plugin.CinemaMode/Images/jellyfin-plugin-cinemamode.jpg"/>
 </p>
 
 Photo by <a href="https://unsplash.com/@grstocks?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">GR Stocks</a> on <a href="https://unsplash.com/photos/q8P8YoR6erg?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
