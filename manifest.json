@@ -6,7 +6,7 @@
         "description": "Enable Cinema Mode with local trailers and pre-rolls.",
         "owner": "CherryFloors",
         "overview": "Enable Jellyfin's Cinema Mode",
-        "imageUrl": "https://github.com/CherryFloors/jellyfin-plugin-cinemamode/raw/main/Jellyfin.Plugin.CinemaMode/Images/jellyfin-plugin-cinemamode.png",
+        "imageUrl": "https://github.com/CherryFloors/jellyfin-plugin-cinemamode/raw/main/Jellyfin.Plugin.CinemaMode/Images/jellyfin-plugin-cinemamode.jpg",
         "versions": [
             {
                 "checksum": "168963b809bde54f1401aa617105118e",
