@@ -107,7 +107,7 @@ namespace Jellyfin.Plugin.CinemaMode
             }
 
             // Empty list
-            List<IntroInfo> introInfoList = new List<IntroInfo>();
+            int introInfoCount = 0;
 
             // Exclude Base Item
             exclusion_list.Add(item.Id);
@@ -122,10 +122,11 @@ namespace Jellyfin.Plugin.CinemaMode
                     break;
                 }
                 yield return new IntroInfo { ItemId = b.Id, Path = b.Path };
+                introInfoCount ++;
             }
 
             // Fill the gaps
-            int empty_spots = Plugin.Instance.Configuration.NumberOfTrailers - introInfoList.Count;
+            int empty_spots = Plugin.Instance.Configuration.NumberOfTrailers - introInfoCount;
             for (int i = 0; i < empty_spots; i++)
             {
                 BaseItem? b = GetRandomMovieTrailer(true, user);
