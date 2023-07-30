@@ -9,6 +9,14 @@
         "imageUrl": "https://github.com/CherryFloors/jellyfin-plugin-cinemamode/raw/main/Jellyfin.Plugin.CinemaMode/Images/jellyfin-plugin-cinemamode.jpg",
         "versions": [
             {
+                "checksum": "3459c28435f14a61661754c4ad37d049",
+                "changelog": "Initial Release\n",
+                "targetAbi": "10.8.0.0",
+                "sourceUrl": "https://github.com/CherryFloors/jellyfin-plugin-cinemamode/releases/download/v0.2.0.0/cinemamode_0.2.0.0.zip",
+                "timestamp": "2023-07-30T11:08:21.449187",
+                "version": "0.2.0.0"
+            },
+            {
                 "checksum": "2008597b8f0d5fa03a9bfec09309bda1",
                 "changelog": "Fix trailer count\n",
                 "targetAbi": "10.8.0.0",
