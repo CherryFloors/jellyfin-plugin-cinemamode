@@ -11,10 +11,10 @@ using Jellyfin.Data.Enums;
 
 namespace Jellyfin.Plugin.CinemaMode
 {
-    
+
     class TrailerSelector
     {
-        private List<Movie> Trailers { get; set; } = new List<Movie>(){ };
+        private List<Movie> Trailers { get; set; } = new List<Movie>() { };
         private int Returned { get; set; } = 0;
         private Random RNG { get; }
         private Jellyfin.Plugin.CinemaMode.Configuration.PluginConfiguration Config { get; }
@@ -33,7 +33,7 @@ namespace Jellyfin.Plugin.CinemaMode
                 q.HasOfficialRating = true;
                 q.MaxParentalRating = this.Feature.InheritedParentalRatingValue;
             }
-            
+
             List<Movie> movies = Plugin.LibraryManager.GetItemList(q).OfType<Movie>().Where(x => x.LocalTrailers.Count > 0).ToList();
 
             if (movies is not null)
@@ -60,7 +60,7 @@ namespace Jellyfin.Plugin.CinemaMode
             BaseItem item = movie.LocalTrailers.ElementAt(trailerID);
             return new IntroInfo { ItemId = item.Id, Path = item.Path };
         }
-        
+
         public IEnumerable<IntroInfo> GetTrailers()
         {
             // Unplayed
@@ -68,7 +68,7 @@ namespace Jellyfin.Plugin.CinemaMode
             while (this.Trailers.Count != 0 && this.Returned < this.Config.NumberOfTrailers)
             {
                 yield return this.PickAndPop();
-                this.Returned++;                 
+                this.Returned++;
             }
 
             // Break if we have reached count
@@ -84,7 +84,7 @@ namespace Jellyfin.Plugin.CinemaMode
                 yield return this.PickAndPop();
                 this.Returned++;
             }
-            
+
         }
     }
 
@@ -138,13 +138,13 @@ namespace Jellyfin.Plugin.CinemaMode
                 // likely a file permission error, default to none
                 return null;
             }
-            
+
         }
 
         public IEnumerable<IntroInfo> Get(BaseItem item, User user)
         {
             // Return trailer pre roll
-            if (Plugin.Instance.Configuration.EnableTrailerPreroll) 
+            if (Plugin.Instance.Configuration.EnableTrailerPreroll)
             {
                 BaseItem? b = GetRandomPreRoll(Plugin.Instance.Configuration.TrailerPreRollsPath, Plugin.Instance.Configuration.TrailerPreRollsChannelName);
                 if (b != null)
@@ -164,7 +164,7 @@ namespace Jellyfin.Plugin.CinemaMode
             }
 
             // Return feature pre roll
-            if (Plugin.Instance.Configuration.EnableFeaturePreroll) 
+            if (Plugin.Instance.Configuration.EnableFeaturePreroll)
             {
                 BaseItem? b = GetRandomPreRoll(Plugin.Instance.Configuration.FeaturePreRollsPath, Plugin.Instance.Configuration.FeaturePreRollsChannelName);
                 if (b != null)
