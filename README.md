@@ -29,7 +29,7 @@ The plugin is designed to work with **local** content and provide a minimalist a
 
 ### Pre-Rolls
 
-Jellyfin does not manage this type of content out of the box so the plugin creates a ‘Pre-Roll’ channel to organize them. A channel was chosen primarily for its ability to be hidden from non-admin users. The channel has two sub folders, 'Trailer Pre-Rolls' and 'Feature Pre-Rolls'. Media locations for these folders are controlled in the plugins configuration page.
+Jellyfin does not manage this type of content out of the box so the plugin creates a 'Pre-Roll' channel to organize them. A channel was chosen primarily for its ability to be hidden from non-admin users. The channel has two sub folders, 'Trailer Pre-Rolls' and 'Feature Pre-Rolls'. 'Trailer Pre-Rolls' are videos meant to play prior to a block of trailers (think "Now playing on Jellyfin..."). 'Feature Pre-Rolls' are videos meant to play prior to the feature presentation (think "Now your feature presentation..."). Media locations for these folders are controlled in the plugins configuration page.
 
 Some important points about Pre-Rolls:
 1. All content in the channel is given the same rating so don't add content not suitable for all users.
@@ -40,7 +40,17 @@ Some important points about Pre-Rolls:
 
 The plugin will automatically find any trailers you have in your Jellyfin library. Just configure the number of trailers you want to play in the plugins configuration page and you’re good to go. 
 
-The plugin does not support playback of remote trailers. For information on how to add local trailers to Jellyfin, follow [this guide](https://jellyfin.org/docs/general/server/media/movies/#movie-extras). Getting trailers is another story. Scraping your Jellyfin library DB for youtube URLs to download is possible with a little bit of python. If there is sufficient demand I can create a github gist with more details on how to do this.
+By default, "Enforce Rating Limit" is enabled. This ensures the rating of the trailer content does not exceed that of the feature (i.e. trailers for an "R" rated movie will not be shown before a "PG-13" movie). This setting will cause any unrated content to have no trailers played prior and not be shown as a trailer. In this case "unrated" refers to content where the "Parental Rating" field is blank. It does not refer to content with an "NR" or "Not Rated" rating. Jellyfin considers content with a rating of "NR" as exceeding an "R" rating.
+
+ The plugin does not support playback of remote trailers. For information on how to add local trailers to Jellyfin, follow [this guide](https://jellyfin.org/docs/general/server/media/movies/#movie-extras). 
+
+### Troubleshooting
+
+If the plugin is not providing intros check the following:
+- "Cinema Mode" is enabeled in your users playback settings.
+- You have some trailers stored alongside your media following the naming conventions given [here](https://jellyfin.org/docs/general/server/media/movies/#movie-extras).
+- You can playback videos in the 'Trailer Pre-Rolls' and 'Feature Pre-Rolls' sub folders of the ‘Pre-Roll’ channel. Opening these folder will trigger a refresh that may fix your issue.
+- The Jellyfin service has at least read access to the directories containing your pre-rolls.
 
 ## Build Process
 
