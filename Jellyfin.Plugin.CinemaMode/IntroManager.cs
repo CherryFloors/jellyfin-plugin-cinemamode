@@ -11,39 +11,86 @@ using Jellyfin.Data.Enums;
 
 namespace Jellyfin.Plugin.CinemaMode
 {
+
+    class TrailerSelector
+    {
+        private List<Movie> Trailers { get; set; } = new List<Movie>() { };
+        private int Returned { get; set; } = 0;
+        private Random RNG { get; }
+        private Jellyfin.Plugin.CinemaMode.Configuration.PluginConfiguration Config { get; }
+        private BaseItem Feature { get; }
+        private User User { get; }
+
+        private void QueryTrailers(bool IsPlayed)
+        {
+            InternalItemsQuery q = new InternalItemsQuery(this.User);
+            q.HasTrailer = true;
+            q.IncludeItemTypes = new BaseItemKind[] { BaseItemKind.Movie };
+            q.IsPlayed = IsPlayed;
+            q.ExcludeItemIds = new Guid[] { this.Feature.Id };
+            if (this.Config.EnforceRatingLimit)
+            {
+                q.HasOfficialRating = true;
+                q.MaxParentalRating = this.Feature.InheritedParentalRatingValue;
+            }
+
+            List<Movie> movies = Plugin.LibraryManager.GetItemList(q).OfType<Movie>().Where(x => x.LocalTrailers.Count > 0).ToList();
+
+            if (movies is not null)
+            {
+                this.Trailers = movies;
+            }
+        }
+
+        public TrailerSelector(BaseItem Feature, User User, Jellyfin.Plugin.CinemaMode.Configuration.PluginConfiguration Config)
+        {
+            this.RNG = new Random();
+            this.Config = Config;
+            this.Feature = Feature;
+            this.User = User;
+        }
+
+        public IntroInfo PickAndPop()
+        {
+            int idx = this.RNG.Next(this.Trailers.Count);
+            Movie movie = this.Trailers.ElementAt(idx);
+            this.Trailers.RemoveAt(idx);
+
+            int trailerID = this.RNG.Next(movie.LocalTrailers.Count);
+            BaseItem item = movie.LocalTrailers.ElementAt(trailerID);
+            return new IntroInfo { ItemId = item.Id, Path = item.Path };
+        }
+
+        public IEnumerable<IntroInfo> GetTrailers()
+        {
+            // Unplayed
+            this.QueryTrailers(false);
+            while (this.Trailers.Count != 0 && this.Returned < this.Config.NumberOfTrailers)
+            {
+                yield return this.PickAndPop();
+                this.Returned++;
+            }
+
+            // Break if we have reached count
+            if (this.Returned == this.Config.NumberOfTrailers)
+            {
+                yield break;
+            }
+
+            // Played
+            this.QueryTrailers(true);
+            while (this.Trailers.Count != 0 && this.Returned < this.Config.NumberOfTrailers)
+            {
+                yield return this.PickAndPop();
+                this.Returned++;
+            }
+
+        }
+    }
+
     public class IntroManager
     {
         private readonly Random _random = new Random();
-
-        public List<Guid> exclusion_list = new List<Guid>();
-
-        public BaseItem? GetRandomMovieTrailer(bool isplayed, User user)
-        {
-            // Query movies
-            InternalItemsQuery q = new InternalItemsQuery(user);
-            q.HasTrailer = true;
-            q.IncludeItemTypes = new BaseItemKind[] { BaseItemKind.Movie };
-            q.ExcludeItemIds = exclusion_list.ToArray();
-            q.IsPlayed = isplayed;
-            IReadOnlyCollection<BaseItem> movies = Plugin.LibraryManager.GetItemList(q);
-
-            // Check for no results
-            if (movies.Count == 0)
-            {
-                return null;
-            }
-
-            // Get trailers and id to exculsion list
-            Movie? movie = movies.ElementAt(_random.Next(movies.Count)) as Movie;
-            if (movie is null)
-            {
-                return null;
-            }
-            
-            exclusion_list.Add(movie.Id);
-            IReadOnlyList<BaseItem> localTrailers = movie.LocalTrailers;
-            return localTrailers.ElementAt(_random.Next(localTrailers.Count));
-        }
 
         public BaseItem? GetRandomPreRoll(string preRollChannelPath, string preRollChannelName)
         {
@@ -91,13 +138,13 @@ namespace Jellyfin.Plugin.CinemaMode
                 // likely a file permission error, default to none
                 return null;
             }
-            
+
         }
 
         public IEnumerable<IntroInfo> Get(BaseItem item, User user)
         {
             // Return trailer pre roll
-            if (Plugin.Instance.Configuration.EnableTrailerPreroll) 
+            if (Plugin.Instance.Configuration.EnableTrailerPreroll)
             {
                 BaseItem? b = GetRandomPreRoll(Plugin.Instance.Configuration.TrailerPreRollsPath, Plugin.Instance.Configuration.TrailerPreRollsChannelName);
                 if (b != null)
@@ -106,40 +153,18 @@ namespace Jellyfin.Plugin.CinemaMode
                 }
             }
 
-            // Empty list
-            int introInfoCount = 0;
-
-            // Exclude Base Item
-            exclusion_list.Add(item.Id);
-
-            // Try to get unplayed trailers
-            for (int i = 0; i < Plugin.Instance.Configuration.NumberOfTrailers; i++)
+            // Return Trailers
+            if (Plugin.Instance.Configuration.NumberOfTrailers > 0)
             {
-                BaseItem? b = GetRandomMovieTrailer(false, user);
-                if (b == null)
-                {   
-                    // Move on to played movies
-                    break;
-                }
-                yield return new IntroInfo { ItemId = b.Id, Path = b.Path };
-                introInfoCount ++;
-            }
-
-            // Fill the gaps
-            int empty_spots = Plugin.Instance.Configuration.NumberOfTrailers - introInfoCount;
-            for (int i = 0; i < empty_spots; i++)
-            {
-                BaseItem? b = GetRandomMovieTrailer(true, user);
-                if (b == null)
+                TrailerSelector trailerSelector = new TrailerSelector(item, user, Plugin.Instance.Configuration);
+                foreach (IntroInfo trailer in trailerSelector.GetTrailers())
                 {
-                    // No played movies
-                    break;
+                    yield return trailer;
                 }
-                yield return new IntroInfo { ItemId = b.Id, Path = b.Path };
             }
 
             // Return feature pre roll
-            if (Plugin.Instance.Configuration.EnableFeaturePreroll) 
+            if (Plugin.Instance.Configuration.EnableFeaturePreroll)
             {
                 BaseItem? b = GetRandomPreRoll(Plugin.Instance.Configuration.FeaturePreRollsPath, Plugin.Instance.Configuration.FeaturePreRollsChannelName);
                 if (b != null)

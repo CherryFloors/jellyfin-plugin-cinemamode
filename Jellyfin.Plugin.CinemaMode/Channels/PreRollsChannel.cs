@@ -134,7 +134,7 @@ public class PreRollsChannel : IChannel, IDisableMediaSourceDisplay, ISupportsMe
                 // Create media source
                 List<MediaSourceInfo> mediaSources = new List<MediaSourceInfo>();
                 mediaSources.Add(
-                    new MediaSourceInfo 
+                    new MediaSourceInfo
                     {
                         Path = preRoll,
                         Name = System.IO.Path.GetFileNameWithoutExtension(preRoll),
@@ -226,7 +226,7 @@ public class PreRollsChannel : IChannel, IDisableMediaSourceDisplay, ISupportsMe
         {
             // Get this channel
             var q = Plugin.LibraryManager.GetItemList(
-                new InternalItemsQuery 
+                new InternalItemsQuery
                 {
                     Name = Name,
                     IncludeItemTypes = new BaseItemKind[] { BaseItemKind.Channel }
@@ -266,7 +266,9 @@ public class PreRollsChannel : IChannel, IDisableMediaSourceDisplay, ISupportsMe
                 }
                 _logger.LogInformation($"Finished refreshing channel: {thisChannel.Name}");
 
-            } else {
+            }
+            else
+            {
                 _logger.LogInformation("Failed to find channel when attempting to refresh");
             }
 
@@ -285,12 +287,13 @@ public class PreRollsChannel : IChannel, IDisableMediaSourceDisplay, ISupportsMe
         yield return new TaskTriggerInfo { Type = TaskTriggerInfo.TriggerStartup };
 
         // Every so often
-        yield return new TaskTriggerInfo {
+        yield return new TaskTriggerInfo
+        {
             Type = TaskTriggerInfo.TriggerDaily,
             TimeOfDayTicks = TimeSpan.FromHours(2).Ticks,
             MaxRuntimeTicks = TimeSpan.FromHours(4).Ticks
         };
-        
+
     }
 
 }
