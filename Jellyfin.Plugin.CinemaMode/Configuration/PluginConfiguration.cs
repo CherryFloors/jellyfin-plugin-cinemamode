@@ -14,6 +14,8 @@ namespace Jellyfin.Plugin.CinemaMode.Configuration
         public bool EnableTrailerPreroll { get; set; }
 
         public bool EnableFeaturePreroll { get; set; }
+        
+        public bool EnforceRatingLimit { get; set; }
 
         public string TrailerPreRollsChannelName { get; } = "Trailer Pre-Rolls";
 
@@ -26,6 +28,7 @@ namespace Jellyfin.Plugin.CinemaMode.Configuration
             NumberOfTrailers = 2;
             EnableTrailerPreroll = false;
             EnableFeaturePreroll = false;
+            EnforceRatingLimit = true;
         }
     }
 }

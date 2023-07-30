@@ -14,33 +14,25 @@
                     </div>
                     <div class="verticalSection">
                         <p>
-                            This plugin allows users to enable Jellyfin's Cinema Mode functionality with local trailers and pre-rolls. 
-                            The system admin can configure a set number of trailers to play before a movie. In addition, pre-roll videos 
-                            can be played before and after the block of trailers. All of this can be disabled at the user level by turning 
-                            off Cinema Mode in the users Playback settings. For more information, access the user guide via the above help
-                            button. Pro tip: Skip any pre-roll or trailer by pressing the next button in the player.
+                            This plugin allows users to enable Jellyfin's Cinema Mode functionality with Trailer Pre-Rolls, 
+                            Trailers, and Feature Pre-Rolls. Each of these can be configured/turned off in the sections 
+                            below. All of this can be disabled at the user level by turning off Cinema Mode in the users 
+                            Playback settings. For more information, access the user guide via the above help button. Pro 
+                            tip: Skip any pre-roll or trailer by pressing the next button in the player.
                         </p>
                         <br/>
                     </div>
+                    
+                    <!-- Trailer Pre Rolls -->
+                    <h2 class="sectionTitle">Trailer Pre-Rolls</h2>
+                    <p>These play before the block of trailers. Think "Now playing on Jellyfin..."</p>
                     <div class="inputContainer">
                         <label class="inputLabel inputLabelUnfocused" for="trailer-prerolls">Trailer Pre-Rolls Folder</label>
                         <input type="string" id="trailer-prerolls" name="trailer-prerolls" is="emby-input"/>
                         <div class="fieldDescription">
-                            Specify location of trailer pre-roll videos. (Should contain only videso, no subdirectories) 
-                        </div>
-                    </div>
-                    <div class="inputContainer">
-                        <label class="inputLabel inputLabelUnfocused" for="feature-prerolls">Feature Pre-Rolls Folder</label>
-                        <input type="string" id="feature-prerolls" name="feature-prerolls" is="emby-input"/>
-                        <div class="fieldDescription">
-                            Specify location of feature pre-roll videos. (Should contain only videso, no subdirectories) 
-                        </div>
-                    </div>
-                    <div class="inputContainer">
-                        <label class="inputLabel inputLabelUnfocused" for="number-trailers">Number of Trailers</label>
-                        <input type="number" id="number-trailers" name="number-trailers" is="emby-input"/>
-                        <div class="fieldDescription">
-                            Specify the number of trailers to play.
+                            Location of trailer pre-roll videos (should contain only videos, no subdirectories). Content in this folder 
+                            is scanned and updated automatically in the database once every 24 hours. To manually trigger a scan, you must open
+                            the Trailer Pre-Rolls channel. Do this when adding/removing content.
                         </div>
                     </div>
                     <div class="checkboxContainer checkboxContainer-withDescription">
@@ -50,6 +42,45 @@
                         </label>
                         <div class="fieldDescription checkboxFieldDescription">
                             One random trailer pre-roll video will play before the trailers start.
+                        </div>
+                    </div>
+                    <br/>
+
+                    <!-- Trailers -->
+                    <h2 class="sectionTitle">Trailers</h2>
+                    <p>Trailers you have stored with your movies.</p>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="number-trailers">Number of Trailers</label>
+                        <input type="number" id="number-trailers" name="number-trailers" is="emby-input"/>
+                        <div class="fieldDescription">
+                            The number of trailers to play. Setting at 0 will turn this section off. 
+                        </div>
+                    </div>
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label>
+                            <input is="emby-checkbox" type="checkbox" id="enforce-rating-limit" name="enforce-rating-limit" />
+                            <span>Enforce Rating Limit</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">
+                            Ensures the rating of the trailer content does not exceed that of the feature (i.e. trailers for an "R" 
+                            rated movie will not be shown before a "PG-13" movie). This setting will cause any unrated content to 
+                            have no trailers played prior and not be shown as a trailer. In this case "unrated" refers to content 
+                            where the "Parental Rating" field is blank. It does not refer to content with an "NR" or "Not Rated" rating.
+                            Jellyfin considers content with a rating of "NR" as exceeding an "R" rating.
+                        </div>
+                    </div>
+                    <br/>
+                    
+                    <!-- Feature Pre Rolls -->
+                    <h2 class="sectionTitle">Feature Pre-Rolls</h2>
+                    <p>These play after the block of trailers. Think "Now your feature presentation..."</p>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="feature-prerolls">Feature Pre-Rolls Folder</label>
+                        <input type="string" id="feature-prerolls" name="feature-prerolls" is="emby-input"/>
+                        <div class="fieldDescription">
+                            Location of feature pre-roll videos (Should contain only videos, no subdirectories). Content in this folder 
+                            is scanned and updated automatically in the database once every 24 hours. To manually trigger a scan, you must open
+                            the Feature Pre-Rolls channel. Do this when adding/removing content. 
                         </div>
                     </div>
                     <div class="checkboxContainer checkboxContainer-withDescription">
@@ -78,6 +109,7 @@
                     $('#number-trailers', page).val(config.NumberOfTrailers);
                     document.getElementById('enable-trailer-preroll').checked = config.EnableTrailerPreroll;
                     document.getElementById('enable-feature-preroll').checked = config.EnableFeaturePreroll;
+                    document.getElementById('enforce-rating-limit').checked = config.EnforceRatingLimit;
                     Dashboard.hideLoadingMsg();
                 });
             });
@@ -95,7 +127,7 @@
                     config.NumberOfTrailers = parseInt(NumberOfTrailers);
                     config.EnableTrailerPreroll = document.getElementById('enable-trailer-preroll').checked;
                     config.EnableFeaturePreroll = document.getElementById('enable-feature-preroll').checked;
-
+                    config.EnforceRatingLimit = document.getElementById('enforce-rating-limit').checked;
                     ApiClient.updatePluginConfiguration(pluginId, config).then(Dashboard.processPluginConfigurationUpdateResult);
                 });
 
