@@ -6,6 +6,7 @@ using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Library;
 using Jellyfin.Data.Enums;
+using Microsoft.Extensions.Logging;
 
 #nullable enable
 
@@ -20,6 +21,7 @@ namespace Jellyfin.Plugin.CinemaMode
         private Jellyfin.Plugin.CinemaMode.Configuration.PluginConfiguration Config { get; }
         private BaseItem Feature { get; }
         private User User { get; }
+        private readonly ILogger Logger;
 
         private void QueryTrailers(bool IsPlayed)
         {
@@ -39,15 +41,19 @@ namespace Jellyfin.Plugin.CinemaMode
             if (movies is not null)
             {
                 this.Trailers = movies;
+            } else
+            {
+                this.Logger.LogInformation($"|jellyfin-cinema-mode| No trailer found: {this.Feature.Name} {this.Feature.InheritedParentalRatingValue} Watched({IsPlayed}) RatingLimit({this.Config.EnforceRatingLimit})");
             }
         }
 
-        public TrailerSelector(BaseItem Feature, User User, Jellyfin.Plugin.CinemaMode.Configuration.PluginConfiguration Config)
+        public TrailerSelector(BaseItem Feature, User User, Jellyfin.Plugin.CinemaMode.Configuration.PluginConfiguration Config, ILogger logger)
         {
             this.RNG = new Random();
             this.Config = Config;
             this.Feature = Feature;
             this.User = User;
+            this.Logger = logger;
         }
 
         public IntroInfo PickAndPop()
@@ -92,6 +98,13 @@ namespace Jellyfin.Plugin.CinemaMode
     {
         private readonly Random _random = new Random();
 
+        private readonly ILogger Logger;
+
+        public IntroManager(ILogger logger)
+        {
+            this.Logger = logger;
+        }
+
         public BaseItem? GetRandomPreRoll(string preRollChannelPath, string preRollChannelName)
         {
             try
@@ -102,6 +115,7 @@ namespace Jellyfin.Plugin.CinemaMode
                 // If no paths, take early exit
                 if (preRollPaths.Count() == 0)
                 {
+                    this.Logger.LogInformation($"|jellyfin-cinema-mode| No file/dir found {preRollChannelName}:{preRollChannelPath}");
                     return null;
                 }
 
@@ -114,6 +128,7 @@ namespace Jellyfin.Plugin.CinemaMode
                 // Check for no results
                 if (preRollChannel.Count != 1)
                 {
+                    this.Logger.LogInformation($"|jellyfin-cinema-mode| pre-rolls channel query had {preRollChannel.Count} results {preRollChannelName}:{preRollChannelPath}");
                     return null;
                 }
 
@@ -127,15 +142,18 @@ namespace Jellyfin.Plugin.CinemaMode
                 IEnumerable<BaseItem> goodPreRolls = preRolls.Where(p => p.TotalBitrate != null).Where(p => preRollPaths.Contains(p.Path));
                 if (goodPreRolls.Count() == 0)
                 {
+                    this.Logger.LogInformation($"|jellyfin-cinema-mode| No good pre-rolls found {preRollChannelName}:{preRollChannelPath}");
                     return null;
                 }
 
                 // Return a random
                 return goodPreRolls.ElementAt(_random.Next(goodPreRolls.Count()));
             }
-            catch (System.Exception)
+            catch (System.Exception e)
             {
                 // likely a file permission error, default to none
+                this.Logger.LogError("|jellyfin-cinema-mode| Encountered an exception when getting a pre-roll");
+                this.Logger.LogError(e.StackTrace);
                 return null;
             }
 
@@ -156,7 +174,7 @@ namespace Jellyfin.Plugin.CinemaMode
             // Return Trailers
             if (Plugin.Instance.Configuration.NumberOfTrailers > 0)
             {
-                TrailerSelector trailerSelector = new TrailerSelector(item, user, Plugin.Instance.Configuration);
+                TrailerSelector trailerSelector = new TrailerSelector(item, user, Plugin.Instance.Configuration, this.Logger);
                 foreach (IntroInfo trailer in trailerSelector.GetTrailers())
                 {
                     yield return trailer;

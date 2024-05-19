@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
-using MediaBrowser.Common.Progress;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Controller.Entities;
@@ -91,7 +90,6 @@ public class PreRollsChannel : IChannel, IDisableMediaSourceDisplay, ISupportsMe
     /// <returns><see cref="ChannelItemResult"/> containing the types of trailers.</returns>
     private ChannelItemResult GetChannelTypes()
     {
-        _logger.LogDebug("Get Channel Types");
         return new ChannelItemResult
         {
             Items = new List<ChannelItemInfo>
@@ -246,7 +244,7 @@ public class PreRollsChannel : IChannel, IDisableMediaSourceDisplay, ISupportsMe
                     ChannelIds = new Guid[] { thisChannel.Id }
                 };
 
-                var result = await Plugin.ChannelManager.GetChannelItemsInternal(query, new SimpleProgress<double>(), cancellationToken).ConfigureAwait(false);
+                var result = await Plugin.ChannelManager.GetChannelItemsInternal(query, new Progress<double>(), cancellationToken).ConfigureAwait(false);
 
                 foreach (var item in result.Items)
                 {
@@ -260,7 +258,7 @@ public class PreRollsChannel : IChannel, IDisableMediaSourceDisplay, ISupportsMe
                                 EnableTotalRecordCount = false,
                                 ChannelIds = new Guid[] { thisChannel.Id }
                             },
-                            new SimpleProgress<double>(),
+                            new Progress<double>(),
                             cancellationToken).ConfigureAwait(false);
                     }
                 }

@@ -8,7 +8,6 @@ using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Channels;
-using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.CinemaMode
 {
@@ -26,16 +25,14 @@ namespace Jellyfin.Plugin.CinemaMode
 
         public static ILibraryManager LibraryManager { get; private set; }
         public static IChannelManager ChannelManager { get; private set; }
-        public static ILogger<Plugin> Logger { get; private set; }
 
-        public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ILibraryManager libraryManager, IServerApplicationPaths serverApplicationPaths, IChannelManager channelManager, ILogger<Plugin> logger)
+        public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ILibraryManager libraryManager, IServerApplicationPaths serverApplicationPaths, IChannelManager channelManager)
             : base(applicationPaths, xmlSerializer)
         {
             Instance = this;
             LibraryManager = libraryManager;
             ServerApplicationPaths = serverApplicationPaths;
             ChannelManager = channelManager;
-            Logger = logger;
         }
 
         public IEnumerable<PluginPageInfo> GetPages()

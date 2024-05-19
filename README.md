@@ -27,14 +27,14 @@ More information about installing plugins can be found in the official docs [her
 
 The plugin is designed to work with **local** content and provide a minimalist approach to configuration at the moment. Open the plugin's configuration page by clicking on the thumbnail under 'My Plugins'.
 
-### Pre-Rolls
+### ~~Pre-Rolls~~
 
-Jellyfin does not manage this type of content out of the box so the plugin creates a 'Pre-Roll' channel to organize them. A channel was chosen primarily for its ability to be hidden from non-admin users. The channel has two sub folders, 'Trailer Pre-Rolls' and 'Feature Pre-Rolls'. 'Trailer Pre-Rolls' are videos meant to play prior to a block of trailers (think "Now playing on Jellyfin..."). 'Feature Pre-Rolls' are videos meant to play prior to the feature presentation (think "Now your feature presentation..."). Media locations for these folders are controlled in the plugins configuration page.
+~~Jellyfin does not manage this type of content out of the box so the plugin creates a 'Pre-Roll' channel to organize them. A channel was chosen primarily for its ability to be hidden from non-admin users. The channel has two sub folders, 'Trailer Pre-Rolls' and 'Feature Pre-Rolls'. 'Trailer Pre-Rolls' are videos meant to play prior to a block of trailers (think "Now playing on Jellyfin..."). 'Feature Pre-Rolls' are videos meant to play prior to the feature presentation (think "Now your feature presentation..."). Media locations for these folders are controlled in the plugins configuration page.~~
 
-Some important points about Pre-Rolls:
-1. All content in the channel is given the same rating so don't add content not suitable for all users.
-2. A scheduled task refreshes the Pre-Roll channel once per day. If you add/remove items or change the channel paths and want the changes reflected immediately, open each channel folder. This will trigger a refresh of channel contents, otherwise it will update within 24 hours.
-3. The folder containing your pre-rolls should contain only valid video files. The plugin will ignore any subdirectories and videos in them.
+~~Some important points about Pre-Rolls:~~
+1. ~~All content in the channel is given the same rating so don't add content not suitable for all users.~~
+2. ~~A scheduled task refreshes the Pre-Roll channel once per day. If you add/remove items or change the channel paths and want the changes reflected immediately, open each channel folder. This will trigger a refresh of channel contents, otherwise it will update within 24 hours.~~
+3. ~~The folder containing your pre-rolls should contain only valid video files. The plugin will ignore any subdirectories and videos in them.~~
 
 ### Trailers
 
