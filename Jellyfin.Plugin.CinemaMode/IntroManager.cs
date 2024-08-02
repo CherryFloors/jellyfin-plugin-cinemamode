@@ -7,59 +7,343 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Library;
 using Jellyfin.Data.Enums;
 using Microsoft.Extensions.Logging;
+using Jellyfin.Plugin.CinemaMode.Configuration;
 
 #nullable enable
 
 namespace Jellyfin.Plugin.CinemaMode
 {
 
+    enum PreRollType
+    {
+        TrailerPreRoll,
+        FeaturePreRoll,
+    }
+
+    class PreRollSelector
+    {
+        private PreRollType Category { get; } 
+        private Random RNG { get; }
+        private BaseItem Feature { get; }
+        private User User { get; }
+        private string PreRollLibrary { get; }
+        private List<PreRollSelectionConfig> PreRollsSelections { get; }
+        private bool IgnoreOutOfSeason { get; }
+        private bool EnforceRatingLimit { get; }
+        private List<SeasonalTagDefinition> SeasonalTagDefinitions { get; }
+        private readonly ILogger Logger;
+
+
+        public PreRollSelector(PreRollType Category, BaseItem Feature, User User, PluginConfiguration Config, ILogger logger)
+        {
+            this.Category = Category;
+            this.RNG = new Random();
+            this.Feature = Feature;
+            this.User = User;
+            this.Logger = logger;
+
+            if (Category == PreRollType.TrailerPreRoll)
+            {
+                this.PreRollLibrary = Config.TrailerPreRollsLibrary;
+                this.PreRollsSelections = Config.TrailerPreRollsSelections;
+                this.EnforceRatingLimit = Config.TrailerPreRollsRatingLimit;
+                this.SeasonalTagDefinitions = Config.SeasonalTagDefinitions;
+                this.IgnoreOutOfSeason = Config.TrailerPreRollsIgnoreOutOfSeason;
+            }
+            else
+            {
+                this.PreRollLibrary = Config.FeaturePreRollsLibrary;
+                this.PreRollsSelections = Config.FeaturePreRollsSelections;
+                this.EnforceRatingLimit = Config.FeaturePreRollsRatingLimit;
+                this.SeasonalTagDefinitions = Config.SeasonalTagDefinitions;
+                this.IgnoreOutOfSeason = Config.FeaturePreRollsIgnoreOutOfSeason;
+            }
+        }
+
+        public List<String> PreRollYearTags() 
+        {
+            if (!this.Feature.PremiereDate.HasValue)
+            {
+                return new List<string>();
+            }
+            
+            String Year = this.Feature.PremiereDate.Value.Year.ToString();
+            String Decade = $"{Year.Substring(0, 3)}0s";
+            return new List<string>() { Year, Decade };
+        }
+        
+        public bool InSeason(SeasonalTagDefinition seasonalTag, DateTime today)
+        {
+            DateTime startDate = DateTime.Parse(seasonalTag.Start);
+            DateTime endDate = DateTime.Parse(seasonalTag.End);
+
+            int yearDiff = endDate.Year - startDate.Year;
+            startDate = new DateTime(today.Year, startDate.Month, startDate.Day);
+            endDate = new DateTime(today.Year + yearDiff, endDate.Month, endDate.Day);
+
+            if (today >= startDate && today <= endDate)
+            {
+                return true;
+            }   
+            return false;
+        }
+
+        public List<String> PreRollSeasonTags()
+        {
+            DateTime today = DateTime.Now;
+            List<string> Tags = new List<string>();
+
+            foreach (SeasonalTagDefinition seasonalTag in this.SeasonalTagDefinitions)
+            {
+                if (InSeason(seasonalTag, today))
+                {
+                    Tags.Add(seasonalTag.Tag);
+                }   
+            }
+
+            return Tags;
+        }
+
+        private string[] OutOfSeasonTags()
+        {
+            DateTime today = DateTime.Now;
+            List<string> Tags = new List<string>();
+
+            foreach (SeasonalTagDefinition seasonalTag in this.SeasonalTagDefinitions)
+            {
+                if (!InSeason(seasonalTag, today))
+                {
+                    Tags.Add(seasonalTag.Tag);
+                }   
+            }
+            return Tags.ToArray();
+        }
+
+        public Guid[] GetStudioIds()
+        {
+            List<Guid> ids = new List<Guid>();
+            foreach (string studio in Feature.Studios)
+            {
+                InternalItemsQuery query = new InternalItemsQuery();
+                query.IncludeItemTypes = new BaseItemKind[] { BaseItemKind.Studio };
+                query.Name = studio;
+                List<BaseItem> items = Plugin.LibraryManager.GetItemList(query);
+                foreach (BaseItem item in items)
+                {
+                    ids.Add(item.Id);
+                } 
+            }
+            return ids.ToArray();
+        }
+
+
+        public InternalItemsQuery QueryBuilder(PreRollSelectionConfig? SelectionConfig)
+        {
+            InternalItemsQuery query = new InternalItemsQuery(this.User);
+            query.AncestorIds = new Guid[] { Guid.Parse(this.PreRollLibrary) };
+            query.IncludeItemTypes = new BaseItemKind[] { BaseItemKind.Movie };
+
+            if (this.IgnoreOutOfSeason)
+            {
+               query.ExcludeTags = OutOfSeasonTags(); 
+            }
+
+            if (this.EnforceRatingLimit)
+            {
+                query.MaxParentalRating = this.Feature.InheritedParentalRatingValue;
+            }
+
+            if (SelectionConfig == null)
+            {
+                return query;
+            }
+
+            if (SelectionConfig.Genre)
+            {
+                query.Genres = Feature.Genres;
+            }
+
+            if (SelectionConfig.Studios)
+            {
+                Guid[] ids = GetStudioIds();
+                query.StudioIds = ids;
+            }
+
+            List<String> tags = new List<String>();
+            if (SelectionConfig.Name)
+            {
+                tags.Add(Feature.Name);
+            }
+
+            if (SelectionConfig.Year && this.Feature.PremiereDate.HasValue)
+            {
+                tags.Add(this.Feature.PremiereDate.Value.Year.ToString());
+            }
+
+            if (SelectionConfig.Decade && this.Feature.PremiereDate.HasValue)
+            {
+                tags.Add($"{this.Feature.PremiereDate.Value.Year.ToString().Substring(0, 3)}0s");
+            }
+
+            if (SelectionConfig.Seasonal)
+            {
+                tags.AddRange(PreRollSeasonTags());
+            }
+
+            if (tags.Count > 0)
+            {
+                query.Tags = tags.ToArray();
+            }
+
+            return query;
+        }
+
+        public List<Movie> QueryPreRolls(PreRollSelectionConfig? SelectionConfig)
+        {
+            InternalItemsQuery query = QueryBuilder(SelectionConfig);
+            List<BaseItem> items = Plugin.LibraryManager.GetItemList(query);
+            if (SelectionConfig != null && SelectionConfig.AllTags)
+            {
+                items = items.Where(pR => query.Tags.All(t => pR.Tags.Contains(t))).ToList();
+            }
+            return items.OfType<Movie>().ToList();
+        }
+
+        public IntroInfo? GetPreRoll()
+        {
+            List<Movie> preRolls;
+            foreach (PreRollSelectionConfig SelectConfig in this.PreRollsSelections)
+            {
+                preRolls = QueryPreRolls(SelectConfig);
+                if (preRolls.Count > 0) {
+                    int idx = this.RNG.Next(preRolls.Count);
+                    Video preRoll = preRolls.ElementAt(idx);
+                    return new IntroInfo { ItemId = preRoll.Id, Path = preRoll.Path };
+                }
+            }
+
+            preRolls = QueryPreRolls(null);
+            if (preRolls.Count > 0) {
+                int idx = this.RNG.Next(preRolls.Count);
+                Video preRoll = preRolls.ElementAt(idx);
+                return new IntroInfo { ItemId = preRoll.Id, Path = preRoll.Path };
+            }
+
+            this.Logger.LogInformation($"|jellyfin-cinema-mode| No Pre-Rolls Type: {this.Category} User: {this.User}");
+            return null;
+
+        }
+    }
+
     class TrailerSelector
     {
         private List<Movie> Trailers { get; set; } = new List<Movie>() { };
         private int Returned { get; set; } = 0;
+        private List<Guid> ShownTrailers = new List<Guid>() { };
         private Random RNG { get; }
-        private Jellyfin.Plugin.CinemaMode.Configuration.PluginConfiguration Config { get; }
+        private PluginConfiguration Config { get; }
         private BaseItem Feature { get; }
         private User User { get; }
+        private List<TrailerSelectionConfig> selectionRules { get; set; } = new List<TrailerSelectionConfig>() { };
         private readonly ILogger Logger;
-
-        private void QueryTrailers(bool IsPlayed)
-        {
-            InternalItemsQuery q = new InternalItemsQuery(this.User);
-            q.HasTrailer = true;
-            q.IncludeItemTypes = new BaseItemKind[] { BaseItemKind.Movie };
-            q.IsPlayed = IsPlayed;
-            q.ExcludeItemIds = new Guid[] { this.Feature.Id };
-            if (this.Config.EnforceRatingLimit)
-            {
-                q.HasOfficialRating = true;
-                q.MaxParentalRating = this.Feature.InheritedParentalRatingValue;
-            }
-
-            List<Movie> movies = Plugin.LibraryManager.GetItemList(q).OfType<Movie>().Where(x => x.LocalTrailers.Count > 0).ToList();
-
-            if (movies is not null)
-            {
-                this.Trailers = movies;
-            } else
-            {
-                this.Logger.LogInformation($"|jellyfin-cinema-mode| No trailer found: {this.Feature.Name} {this.Feature.InheritedParentalRatingValue} Watched({IsPlayed}) RatingLimit({this.Config.EnforceRatingLimit})");
-            }
-        }
 
         public TrailerSelector(BaseItem Feature, User User, Jellyfin.Plugin.CinemaMode.Configuration.PluginConfiguration Config, ILogger logger)
         {
+            this.ShownTrailers.Add(Feature.Id);
             this.RNG = new Random();
             this.Config = Config;
             this.Feature = Feature;
             this.User = User;
             this.Logger = logger;
+            foreach (TrailerSelectionConfig selectionConfig in Config.TrailerSelectionRules)
+            {
+               this.selectionRules.Add(selectionConfig); 
+            }
+        }
+
+        private InternalItemsQuery BaseQuery(bool IsPlayed)
+        {
+            InternalItemsQuery baseQuery = new InternalItemsQuery(this.User);
+            baseQuery.HasTrailer = true;
+            baseQuery.IncludeItemTypes = new BaseItemKind[] { BaseItemKind.Movie };
+            baseQuery.ExcludeItemIds = this.ShownTrailers.ToArray();
+
+            if (this.Config.EnforceRatingLimitTrailers)
+            {
+                baseQuery.HasOfficialRating = true;
+                baseQuery.MaxParentalRating = this.Feature.InheritedParentalRatingValue;
+            }
+
+            baseQuery.IsPlayed = IsPlayed;
+
+            return baseQuery;
+        }
+
+        private InternalItemsQuery BuildQuery(TrailerSelectionConfig config)
+        {
+            InternalItemsQuery configQuery = BaseQuery(!config.Unplayed);
+
+            if (config.Year && Feature.PremiereDate.HasValue)
+            {
+                int year = Feature.PremiereDate.Value.Year;
+                configQuery.MinPremiereDate = new DateTime(year, 1, 1);
+                configQuery.MaxPremiereDate = new DateTime(year, 12, 31);
+            }
+
+            if (config.Decade && Feature.PremiereDate.HasValue)
+            {
+                int year_start = (Feature.PremiereDate.Value.Year / 10) * 10;
+                int year_end = year_start + 9;
+                configQuery.MinPremiereDate = new DateTime(year_start, 1, 1);
+                configQuery.MaxPremiereDate = new DateTime(year_end, 12, 31);
+            }
+            
+            if (config.Genre)
+            {
+                configQuery.Genres = Feature.Genres;
+            }
+
+            if (config.RecentlyAdded)
+            {
+                configQuery.MinDateCreated = DateTime.Today.AddMonths(-1);
+            }
+            
+            if (config.MoreLikeThis)
+            {
+                configQuery.SimilarTo = this.Feature;
+            }
+
+            return configQuery;
+        }
+
+        private void QueryTrailers(InternalItemsQuery query)
+        {
+            List<BaseItem> baseItems = Plugin.LibraryManager.GetItemList(query);
+            List<Movie> movies = baseItems.OfType<Movie>().Where(x => x.LocalTrailers.Count > 0).ToList();
+            if (movies is not null)
+            {
+                this.Trailers = movies;
+            } else {
+                this.Logger.LogInformation($"|jellyfin-cinema-mode| No trailer found: {this.Feature.Name} {this.Feature.InheritedParentalRatingValue})");
+            }
+        }
+
+        private void SelectionRuleQuery()
+        {
+            this.Trailers = new List<Movie>() { };
+            while (this.selectionRules.Count != 0 && this.Trailers.Count == 0)
+            {
+                TrailerSelectionConfig trailerSelection = this.selectionRules.ElementAt(0);
+                this.selectionRules.RemoveAt(0); 
+                this.QueryTrailers(this.BuildQuery(trailerSelection));
+            }
         }
 
         public IntroInfo PickAndPop()
         {
             int idx = this.RNG.Next(this.Trailers.Count);
             Movie movie = this.Trailers.ElementAt(idx);
+            this.ShownTrailers.Add(movie.Id);
             this.Trailers.RemoveAt(idx);
 
             int trailerID = this.RNG.Next(movie.LocalTrailers.Count);
@@ -69,8 +353,27 @@ namespace Jellyfin.Plugin.CinemaMode
 
         public IEnumerable<IntroInfo> GetTrailers()
         {
+            // Selection Rules
+            this.SelectionRuleQuery();
+            while (this.Trailers.Count != 0 && this.Returned < this.Config.NumberOfTrailers)
+            {
+                yield return this.PickAndPop();
+                this.Returned++;
+
+                if (this.Config.TrailerConsumeMode | this.Trailers.Count == 0)
+                {
+                   SelectionRuleQuery(); 
+                }
+            }
+             
+            // Break if we have reached count
+            if (this.Returned == this.Config.NumberOfTrailers)
+            {
+                yield break;
+            }
+
             // Unplayed
-            this.QueryTrailers(false);
+            this.QueryTrailers(this.BaseQuery(false));
             while (this.Trailers.Count != 0 && this.Returned < this.Config.NumberOfTrailers)
             {
                 yield return this.PickAndPop();
@@ -84,7 +387,7 @@ namespace Jellyfin.Plugin.CinemaMode
             }
 
             // Played
-            this.QueryTrailers(true);
+            this.QueryTrailers(this.BaseQuery(true));
             while (this.Trailers.Count != 0 && this.Returned < this.Config.NumberOfTrailers)
             {
                 yield return this.PickAndPop();
@@ -105,89 +408,66 @@ namespace Jellyfin.Plugin.CinemaMode
             this.Logger = logger;
         }
 
-        public BaseItem? GetRandomPreRoll(string preRollChannelPath, string preRollChannelName)
-        {
-            try
-            {
-                // Get pre rolls paths
-                string[] preRollPaths = System.IO.Directory.GetFiles(preRollChannelPath);
-
-                // If no paths, take early exit
-                if (preRollPaths.Count() == 0)
-                {
-                    this.Logger.LogInformation($"|jellyfin-cinema-mode| No file/dir found {preRollChannelName}:{preRollChannelPath}");
-                    return null;
-                }
-
-                // Get chennel
-                InternalItemsQuery q = new InternalItemsQuery();
-                q.Name = preRollChannelName;
-                q.IncludeItemTypes = new BaseItemKind[] { BaseItemKind.Folder };
-                IReadOnlyCollection<BaseItem> preRollChannel = Plugin.LibraryManager.GetItemList(q);
-
-                // Check for no results
-                if (preRollChannel.Count != 1)
-                {
-                    this.Logger.LogInformation($"|jellyfin-cinema-mode| pre-rolls channel query had {preRollChannel.Count} results {preRollChannelName}:{preRollChannelPath}");
-                    return null;
-                }
-
-                // Get pre rolls in that channel
-                InternalItemsQuery q2 = new InternalItemsQuery();
-                q2.ParentId = preRollChannel.ElementAt(0).Id;
-                q2.IncludeItemTypes = new BaseItemKind[] { BaseItemKind.Video };
-                IReadOnlyCollection<BaseItem> preRolls = Plugin.LibraryManager.GetItemList(q2);
-
-                // Filter out matches without bitrate and file path doesnt exist
-                IEnumerable<BaseItem> goodPreRolls = preRolls.Where(p => p.TotalBitrate != null).Where(p => preRollPaths.Contains(p.Path));
-                if (goodPreRolls.Count() == 0)
-                {
-                    this.Logger.LogInformation($"|jellyfin-cinema-mode| No good pre-rolls found {preRollChannelName}:{preRollChannelPath}");
-                    return null;
-                }
-
-                // Return a random
-                return goodPreRolls.ElementAt(_random.Next(goodPreRolls.Count()));
-            }
-            catch (System.Exception e)
-            {
-                // likely a file permission error, default to none
-                this.Logger.LogError("|jellyfin-cinema-mode| Encountered an exception when getting a pre-roll");
-                this.Logger.LogError(e.StackTrace);
-                return null;
-            }
-
-        }
-
         public IEnumerable<IntroInfo> Get(BaseItem item, User user)
         {
-            // Return trailer pre roll
-            if (Plugin.Instance.Configuration.EnableTrailerPreroll)
+
+            if (Plugin.Instance.Configuration.TrailerPreRollsLibrary != "-")
             {
-                BaseItem? b = GetRandomPreRoll(Plugin.Instance.Configuration.TrailerPreRollsPath, Plugin.Instance.Configuration.TrailerPreRollsChannelName);
-                if (b != null)
+                IntroInfo? trailerPreRoll = null;
+                try
                 {
-                    yield return new IntroInfo { ItemId = b.Id, Path = b.Path };
+                    PreRollSelector preRollSelector = new PreRollSelector(PreRollType.TrailerPreRoll, item, user, Plugin.Instance.Configuration, this.Logger);
+                    trailerPreRoll = preRollSelector.GetPreRoll();
+                }
+                catch (System.Exception e)
+                {
+                    this.Logger.LogError("|jellyfin-cinema-mode| Exception encountered fetching Trailer Pre-Roll");
+                    this.Logger.LogError(e.StackTrace);
+                }
+
+                if (trailerPreRoll != null)
+                {
+                    yield return trailerPreRoll;
                 }
             }
 
-            // Return Trailers
             if (Plugin.Instance.Configuration.NumberOfTrailers > 0)
             {
-                TrailerSelector trailerSelector = new TrailerSelector(item, user, Plugin.Instance.Configuration, this.Logger);
-                foreach (IntroInfo trailer in trailerSelector.GetTrailers())
+                List<IntroInfo> trailers = new List<IntroInfo>();
+                try
+                {
+                    TrailerSelector trailerSelector = new TrailerSelector(item, user, Plugin.Instance.Configuration, this.Logger);
+                    trailers = trailerSelector.GetTrailers().ToList();
+                }
+                catch (System.Exception e)
+                {
+                    this.Logger.LogError("|jellyfin-cinema-mode| Exception encountered fetching Trailers");
+                    this.Logger.LogError(e.StackTrace);
+                }
+
+                foreach (IntroInfo trailer in trailers)
                 {
                     yield return trailer;
                 }
             }
 
-            // Return feature pre roll
-            if (Plugin.Instance.Configuration.EnableFeaturePreroll)
+            if (Plugin.Instance.Configuration.FeaturePreRollsLibrary != "-")
             {
-                BaseItem? b = GetRandomPreRoll(Plugin.Instance.Configuration.FeaturePreRollsPath, Plugin.Instance.Configuration.FeaturePreRollsChannelName);
-                if (b != null)
+                IntroInfo? featurePreRoll = null;
+                try
                 {
-                    yield return new IntroInfo { ItemId = b.Id, Path = b.Path };
+                    PreRollSelector preRollSelector = new PreRollSelector(PreRollType.FeaturePreRoll, item, user, Plugin.Instance.Configuration, this.Logger);
+                    featurePreRoll = preRollSelector.GetPreRoll();
+                }
+                catch (System.Exception e)
+                {
+                    this.Logger.LogError("|jellyfin-cinema-mode| Exception encountered fetching Feature Pre-Roll");
+                    this.Logger.LogError(e.StackTrace);
+                }
+
+                if (featurePreRoll != null)
+                {
+                    yield return featurePreRoll;
                 }
             }
         }

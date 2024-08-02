@@ -7,7 +7,6 @@ using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
 using MediaBrowser.Controller;
-using MediaBrowser.Controller.Channels;
 
 namespace Jellyfin.Plugin.CinemaMode
 {
@@ -24,15 +23,13 @@ namespace Jellyfin.Plugin.CinemaMode
         public static IServerApplicationPaths ServerApplicationPaths { get; private set; }
 
         public static ILibraryManager LibraryManager { get; private set; }
-        public static IChannelManager ChannelManager { get; private set; }
 
-        public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ILibraryManager libraryManager, IServerApplicationPaths serverApplicationPaths, IChannelManager channelManager)
+        public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ILibraryManager libraryManager, IServerApplicationPaths serverApplicationPaths)
             : base(applicationPaths, xmlSerializer)
         {
             Instance = this;
             LibraryManager = libraryManager;
             ServerApplicationPaths = serverApplicationPaths;
-            ChannelManager = channelManager;
         }
 
         public IEnumerable<PluginPageInfo> GetPages()
