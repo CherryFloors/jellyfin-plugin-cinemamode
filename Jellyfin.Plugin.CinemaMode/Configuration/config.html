@@ -14,91 +14,190 @@
                     </div>
                     <div class="verticalSection">
                         <p>
-                            <b>
-                                Note: Updates to Jellyfin have broken the current pre-roll implementation. The configuration
-                                sections will remain while a fix is implemented. They will not have any effect on plugin 
-                                behavior. The trailer playing functionality should still work as it did before.
-                            </b>
-                        </p>
-                        <p>
-                            This plugin allows users to enable Jellyfin's Cinema Mode functionality with Trailer Pre-Rolls, 
+                            This plugin allows users to enable Jellyfin's Cinema Mode functionality to play intro
+                            content before movies. The plugin supports three types of intros: Trailer Pre-Rolls,
                             Trailers, and Feature Pre-Rolls. Each of these can be configured/turned off in the sections 
                             below. All of this can be disabled at the user level by turning off Cinema Mode in the users 
-                            Playback settings. For more information, access the user guide via the above help button. Pro 
-                            tip: Skip any pre-roll or trailer by pressing the next button in the player.
+                            Playback settings. For more information, access the user guide via the above help button. 
+                            Pro-tip: Skip any pre-roll or trailer by pressing the next button in the player.
                         </p>
+                        <div>
+                            <img alt="Cinema Mode Diagram" width="800" height="auto" src="https://github.com/CherryFloors/jellyfin-plugin-cinemamode/raw/main/Jellyfin.Plugin.CinemaMode/Images/cinema-mode-diagram.png"/>
+                            <div class="fieldDescription">
+                                Diagram illustrating the order in which the three intro types (Trailer Pre-Rolls,
+                                Trailers, and Feature Pre-Rolls) will be shown
+                            </div>
+                        </div>
                         <br/>
                     </div>
                     
-                    <!-- Trailer Pre Rolls -->
-                    <h2 class="sectionTitle">Trailer Pre-Rolls</h2>
-                    <p>These play before the block of trailers. Think "Now playing on Jellyfin..."</p>
-                    <div class="inputContainer">
-                        <label class="inputLabel inputLabelUnfocused" for="trailer-prerolls">Trailer Pre-Rolls Folder</label>
-                        <input type="string" id="trailer-prerolls" name="trailer-prerolls" is="emby-input"/>
-                        <div class="fieldDescription">
-                            Location of trailer pre-roll videos (should contain only videos, no subdirectories). Content in this folder 
-                            is scanned and updated automatically in the database once every 24 hours. To manually trigger a scan, you must open
-                            the Trailer Pre-Rolls channel. Do this when adding/removing content.
+                    <!-- Pre Roll: Trailers -->
+                    <fieldset class="verticalSection verticalSection-extrabottompadding">
+                        <legend>
+                            <h3 class="sectionTitle">Trailer Pre-Rolls</h3>
+                        </legend>
+                        <div class="selectContainer selectLibrary flex-shrink-zero"> 
+                            <label class="selectLabel" for="trailerPreRollLibrarySelect">Trailer Pre-Roll Library</label>
+                            <select is="emby-select" class="emby-select-withcolor emby-select" label="" id="trailerPreRollLibrarySelect">
+                            </select> 
+                            <div class="selectArrowContainer">
+                                <div style="visibility:hidden;display:none;">0</div>
+                                <span class="selectArrow material-icons keyboard_arrow_down" aria-hidden="true"></span>
+                            </div>
+                            <div class="fieldDescription">
+                                Library containing media to play before a block of trailers. Setting this to "-" will
+                                disable this section.
+                            </div>
                         </div>
-                    </div>
-                    <div class="checkboxContainer checkboxContainer-withDescription">
-                        <label>
-                            <input is="emby-checkbox" type="checkbox" id="enable-trailer-preroll" name="enable-trailer-preroll" />
-                            <span>Enable trailer pre-roll</span>
-                        </label>
-                        <div class="fieldDescription checkboxFieldDescription">
-                            One random trailer pre-roll video will play before the trailers start.
+                        <div class="sectionTitleContainer flex align-items-center"> 
+                            <h4 class="sectionTitle">Selection Rules</h4> 
+                            <button onclick="addPreRollRule('trailer-pre-roll-rules')" is="emby-button" type="button" class="fab emby-button" style="margin-left:1em" title="Add"> 
+                                <span class="material-icons add" aria-hidden="true"></span> 
+                            </button> 
+                            <a is="emby-linkbutton" rel="noopener noreferrer" class="raised button-alt headerHelpButton emby-button" target="_blank" href="https://github.com/CherryFloors/jellyfin-plugin-cinemamode#pre-rolls"> 
+                                Help
+                            </a> 
                         </div>
-                    </div>
-                    <br/>
+                        <div class="paperList folderList" id="trailer-pre-roll-rules" style="margin-bottom:2em">
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="ignore-out-of-season-trailer-pre-rolls" name="ignore-out-of-season-trailer-pre-rolls" />
+                                <span>Ignore Out Of Season</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Ignore any pre-roll that has a seasonal tag not currently in season.
+                            </div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="enforce-rating-limit-trailer-pre-rolls" name="enforce-rating-limit-trailer-pre-rolls" />
+                                <span>Enforce Rating Limit</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Pre-Roll's assigned a rating will not be selected if it exceeds the features rating. 
+                                Pre-Roll's not assigned a rating are considered suitable for all features.
+                            </div>
+                        </div>
+                    </fieldset>
 
                     <!-- Trailers -->
-                    <h2 class="sectionTitle">Trailers</h2>
-                    <p>Trailers you have stored with your movies.</p>
-                    <div class="inputContainer">
-                        <label class="inputLabel inputLabelUnfocused" for="number-trailers">Number of Trailers</label>
-                        <input type="number" id="number-trailers" name="number-trailers" is="emby-input"/>
-                        <div class="fieldDescription">
-                            The number of trailers to play. Setting at 0 will turn this section off. 
+                    <fieldset class="verticalSection verticalSection-extrabottompadding">
+                        <legend>
+                            <h3 class="sectionTitle">Trailers</h3>
+                        </legend>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="number-trailers">Number of Trailers</label>
+                            <input type="number" id="number-trailers" name="number-trailers" is="emby-input"/>
+                            <div class="fieldDescription">
+                                The number of trailers to play. Setting at 0 will turn this section off. 
+                            </div>
                         </div>
-                    </div>
-                    <div class="checkboxContainer checkboxContainer-withDescription">
-                        <label>
-                            <input is="emby-checkbox" type="checkbox" id="enforce-rating-limit" name="enforce-rating-limit" />
-                            <span>Enforce Rating Limit</span>
-                        </label>
-                        <div class="fieldDescription checkboxFieldDescription">
-                            Ensures the rating of the trailer content does not exceed that of the feature (i.e. trailers for an "R" 
-                            rated movie will not be shown before a "PG-13" movie). This setting will cause any unrated content to 
-                            have no trailers played prior and not be shown as a trailer. In this case "unrated" refers to content 
-                            where the "Parental Rating" field is blank. It does not refer to content with an "NR" or "Not Rated" rating.
-                            Jellyfin considers content with a rating of "NR" as exceeding an "R" rating.
+                        <div class="sectionTitleContainer flex align-items-center"> 
+                            <h4 class="sectionTitle">Selection Rules</h4> 
+                            <button onclick="addTrailerRule('trailer-rules')" is="emby-button" type="button" class="fab emby-button" style="margin-left:1em" title="Add"> 
+                                <span class="material-icons add" aria-hidden="true"></span> 
+                            </button> 
+                            <a is="emby-linkbutton" rel="noopener noreferrer" class="raised button-alt headerHelpButton emby-button" target="_blank" href="https://github.com/CherryFloors/jellyfin-plugin-cinemamode#trailers">
+                                Help
+                            </a> 
                         </div>
-                    </div>
-                    <br/>
+                        <div class="paperList folderList" id="trailer-rules" style="margin-bottom:2em">
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="trailer-rules-consume-mode" name="trailer-rules-consume-mode" />
+                                <span>Consume Mode</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Consume mode plays only one trailer from a selection rule before moving to the next.
+                            </div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="enforce-rating-limit-trailers" name="enforce-rating-limit-trailers" />
+                                <span>Enforce Rating Limit</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Ensures the rating of the trailer content does not exceed that of the feature (i.e. trailers for an "R" 
+                                rated movie will not be shown before a "PG-13" movie). This setting will cause any unrated content to 
+                                have no trailers played prior and not be shown as a trailer. In this case "unrated" refers to content 
+                                where the "Parental Rating" field is blank. It does not refer to content with an "NR" or "Not Rated" rating.
+                                Jellyfin considers content with a rating of "NR" as exceeding an "R" rating.
+                            </div>
+                        </div>
+                    </fieldset>
                     
                     <!-- Feature Pre Rolls -->
-                    <h2 class="sectionTitle">Feature Pre-Rolls</h2>
-                    <p>These play after the block of trailers. Think "Now your feature presentation..."</p>
-                    <div class="inputContainer">
-                        <label class="inputLabel inputLabelUnfocused" for="feature-prerolls">Feature Pre-Rolls Folder</label>
-                        <input type="string" id="feature-prerolls" name="feature-prerolls" is="emby-input"/>
+                    <fieldset class="verticalSection verticalSection-extrabottompadding">
+                        <legend>
+                            <h3 class="sectionTitle">Feature Pre-Rolls</h3>
+                        </legend>
+                        <div class="selectContainer selectLibrary flex-shrink-zero"> 
+                            <label class="selectLabel" for="featurePreRollLibrarySelect">Pre-Roll Library</label>
+                            <select is="emby-select" class="emby-select-withcolor emby-select" label="" id="featurePreRollLibrarySelect">
+                            </select> 
+                            <div class="selectArrowContainer">
+                                <div style="visibility:hidden;display:none;">0</div>
+                                <span class="selectArrow material-icons keyboard_arrow_down" aria-hidden="true"></span>
+                            </div>
+                            <div class="fieldDescription">
+                                Library containing media to play before the feature. Setting this to "-" will disable
+                                this section.
+                            </div>
+                        </div>
+                        <div class="sectionTitleContainer flex align-items-center"> 
+                            <h4 class="sectionTitle">Selection Rules</h4> 
+                            <button onclick="addPreRollRule('feature-pre-roll-rules')" is="emby-button" type="button" class="fab emby-button" style="margin-left:1em" title="Add"> 
+                                <span class="material-icons add" aria-hidden="true"></span> 
+                            </button> 
+                            <a is="emby-linkbutton" rel="noopener noreferrer" class="raised button-alt headerHelpButton emby-button" target="_blank" href="https://github.com/CherryFloors/jellyfin-plugin-cinemamode#pre-rolls">
+                                Help
+                            </a> 
+                        </div>
+                        <div class="paperList folderList" id="feature-pre-roll-rules" style="margin-bottom:2em">
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="ignore-out-of-season-feature-pre-rolls" name="ignore-out-of-season-feature-pre-rolls" />
+                                <span>Ignore Out Of Season</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Ignore any pre-roll that has a seasonal tag not currently in season.
+                            </div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="enforce-rating-limit-feature-pre-rolls" name="enforce-rating-limit-feature-pre-rolls" />
+                                <span>Enforce Rating Limit</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Pre-Roll's assigned a rating will not be selected if it exceeds the features rating. 
+                                Pre-Roll's not assigned a rating are considered suitable for all features.
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Seasonal Tag Definitions -->
+                    <fieldset class="verticalSection verticalSection-extrabottompadding">
+                        <legend>
+                            <h3 class="sectionTitle">Seasonal Tag Definitions</h3>
+                        </legend>
                         <div class="fieldDescription">
-                            Location of feature pre-roll videos (Should contain only videos, no subdirectories). Content in this folder 
-                            is scanned and updated automatically in the database once every 24 hours. To manually trigger a scan, you must open
-                            the Feature Pre-Rolls channel. Do this when adding/removing content. 
+                            Years in the 'Start Date' and 'End Date' will be ignored by the plugin. The Month and Day
+                            are the only relevant information and the definitions do not need to be updated every year.
                         </div>
-                    </div>
-                    <div class="checkboxContainer checkboxContainer-withDescription">
-                        <label>
-                            <input is="emby-checkbox" type="checkbox" id="enable-feature-preroll" name="enable-feature-preroll" />
-                            <span>Enable feature pre-roll</span>
-                        </label>
-                        <div class="fieldDescription checkboxFieldDescription">
-                            One random feature pre-roll video will play before the feature presentation starts.
+                        <div class="sectionTitleContainer flex align-items-center"> 
+                            <button onclick="addSeasonalTagDef()" is="emby-button" type="button" class="fab emby-button" style="margin-left:1em" title="Add"> 
+                                <span class="material-icons add" aria-hidden="true"></span> 
+                            </button> 
+                            <a is="emby-linkbutton" rel="noopener noreferrer" class="raised button-alt headerHelpButton emby-button" target="_blank" href="https://github.com/CherryFloors/jellyfin-plugin-cinemamode#seasonal-tag-definitions">
+                                Help
+                            </a> 
                         </div>
-                    </div>
+                        <div class="paperList folderList" id="seasonal-tag-definitions">
+                        </div>
+                    </fieldset>
                     <br/>
                     <button is="emby-button" type="submit" class="raised button-submit block"><span>${Save}</span></button>
                 </form>
@@ -106,17 +205,296 @@
         </div>
         <script type="text/javascript">
             var pluginId = "5fcefe1b-df1f-4596-ac57-f2f939c294c5";
+            var mediaFolders = ApiClient.getVirtualFolders();    
+
+            function removeListItem(item) {
+                var p = item.parentElement;
+                p.remove();
+            };
+
+            function clearList(id) {
+                var listItems = document.getElementById(id);
+                listItems.innerHTML = "";
+            }
+
+            function initPreRollRules(id, configPreRollRules)
+            {
+                for (const rule of configPreRollRules) {
+                    var newRule = addPreRollRule(id).getElementsByClassName("listItemBody")[0];
+                    var _name = newRule.children[0].children[0];
+                    var _year = newRule.children[1].children[0];
+                    var _decade = newRule.children[2].children[0];
+                    var _seasonal = newRule.children[3].children[0];
+                    var _genre = newRule.children[4].children[0];
+                    var _studios = newRule.children[5].children[0];
+                    var _all_tags = newRule.children[6].children[0];
+
+                    _name.checked = rule.Name;
+                    _year.checked = rule.Year;
+                    _decade.checked = rule.Decade;
+                    _seasonal.checked = rule.Seasonal;
+                    _genre.checked = rule.Genre;
+                    _studios.checked = rule.Studios;
+                    _all_tags.checked = rule.AllTags;
+                }
+            }
+
+            function initSeasonalTagDefs(configSeasonalTagDefs)
+            {
+                for (const rule of configSeasonalTagDefs) {
+                    var newSeasonalTagDef = addSeasonalTagDef().getElementsByClassName("listItemBody")[0];
+                    var _tag = newSeasonalTagDef.children[0].children[0];
+                    var _start_date = newSeasonalTagDef.children[1].children[0];
+                    var _end_date = newSeasonalTagDef.children[2].children[0];
+
+                    _tag.value = rule.Tag;
+                    _start_date.value = rule.Start;
+                    _end_date.value = rule.End;
+                }
+            }
+
+            function initTrailerRules(configTrailerSelectionRules)
+            {
+                for (const rule of configTrailerSelectionRules) {
+                    var newTrailerSelectionRule = addTrailerRule('trailer-rules').getElementsByClassName("listItemBody")[0];
+                    var _year = newTrailerSelectionRule.children[0].children[0];
+                    var _decade = newTrailerSelectionRule.children[1].children[0];
+                    var _genre = newTrailerSelectionRule.children[2].children[0];
+                    var _recently_added = newTrailerSelectionRule.children[3].children[0];
+                    var _more_like_this = newTrailerSelectionRule.children[4].children[0];
+                    var _unplayed = newTrailerSelectionRule.children[5].children[0];
+
+                    _year.checked = rule.Year;
+                    _decade.checked = rule.Decade;
+                    _genre.checked = rule.Genre;
+                    _recently_added.checked = rule.RecentlyAdded;
+                    _more_like_this.checked = rule.MoreLikeThis;
+                    _unplayed.checked = rule.Unplayed;
+                }
+            }
+
+            function getPreRollRules(id) {
+                var rules = [];
+                var ruleItems = document.getElementById(id).getElementsByClassName("listItemBody")
+                for (const rule of ruleItems) {
+
+                    var _name = rule.children[0].children[0];
+                    var _year = rule.children[1].children[0];
+                    var _decade = rule.children[2].children[0];
+                    var _seasonal = rule.children[3].children[0];
+                    var _genre = rule.children[4].children[0];
+                    var _studios = rule.children[5].children[0];
+                    var _all_tags = rule.children[6].children[0];
+
+                    console.log(rule.children);
+                    console.log(_all_tags);
+                    rules.push(
+                        {
+                            "Name": _name.checked,
+                            "Year": _year.checked,
+                            "Decade": _decade.checked,
+                            "Seasonal": _seasonal.checked,
+                            "Genre": _genre.checked,
+                            "Studios": _studios.checked,
+                            "AllTags": _all_tags.checked,
+                        }
+                    );
+                }
+                return rules
+            }
+
+            function getSeasonalTagDefs() {
+                var tagDefs = [];
+                var seasonalTagDefs = document.getElementById('seasonal-tag-definitions').getElementsByClassName("listItemBody")
+                for (const seasonalTagDef of seasonalTagDefs) {
+
+                    var _tag = seasonalTagDef.children[0].children[0];
+                    var _start_date = seasonalTagDef.children[1].children[0];
+                    var _end_date = seasonalTagDef.children[2].children[0];
+
+                    tagDefs.push(
+                        {
+                            "Tag": _tag.value,
+                            "Start": _start_date.value,
+                            "End": _end_date.value,
+                        }
+                    );
+                }
+                return tagDefs
+            }
+
+            function getTrailerRules() {
+                var rules = [];
+                var ruleItems = document.getElementById('trailer-rules').getElementsByClassName("listItemBody")
+                for (const rule of ruleItems) {
+
+                    var _year = rule.children[0].children[0];
+                    var _decade = rule.children[1].children[0];
+                    var _genre = rule.children[2].children[0];
+                    var _recently_added = rule.children[3].children[0];
+                    var _more_like_this = rule.children[4].children[0];
+                    var _unplayed = rule.children[5].children[0];
+
+                    rules.push(
+                        {
+                            "Year": _year.checked,
+                            "Decade": _decade.checked,
+                            "Genre": _genre.checked,
+                            "RecentlyAdded": _recently_added.checked,
+                            "MoreLikeThis": _more_like_this.checked,
+                            "Unplayed": _unplayed.checked,
+                        }
+                    );
+                }
+                return rules
+            }
+
+            function preRollQueryCheckbox(label) {
+                var checkbox = '<input type="checkbox" id="'.concat(label);
+                checkbox += '" name="';
+                checkbox += label;
+                checkbox += '" />';
+                checkbox += label;
+                return '<label style="margin-right: 20px">'.concat(checkbox).concat('</label>');
+            };
+
+            function preRollQueryRuleFactory(prefix) {
+                var opt = document.createElement('div'); 
+                opt.setAttribute("class", "listItem listItem-border"); 
+
+                var innerHTML = '<div class="listItemBody">'
+                innerHTML += preRollQueryCheckbox("Name (t)");
+                innerHTML += preRollQueryCheckbox("Year (t)");
+                innerHTML += preRollQueryCheckbox("Decade (t)");
+                innerHTML += preRollQueryCheckbox("Seasonal (t)");
+                innerHTML += preRollQueryCheckbox("Genre");
+                innerHTML += preRollQueryCheckbox("Studios");
+                innerHTML += preRollQueryCheckbox("All Tags");
+                innerHTML += '</div>';
+                innerHTML += '<button onclick="removeListItem(this)" type="button" is="paper-icon-button-light" class="listItemButton btnRemovePath paper-icon-button-light" data-index="0">';
+                innerHTML += '<span class="material-icons remove_circle" aria-hidden="true"></span>';
+                innerHTML += '</button>';
+
+                opt.innerHTML = innerHTML;
+                return opt
+            };
+
+            function addPreRollRule(id) {
+                var selector = document.getElementById(id);
+                var newRule = preRollQueryRuleFactory(id);
+                selector.appendChild(newRule);
+                return newRule;
+            };
+
+            function trailerRuleFactory(prefix) {
+                var opt = document.createElement('div'); 
+                opt.setAttribute("class", "listItem listItem-border"); 
+
+                var innerHTML = '<div class="listItemBody">'
+                innerHTML += preRollQueryCheckbox("Year");
+                innerHTML += preRollQueryCheckbox("Decade");
+                innerHTML += preRollQueryCheckbox("Genre");
+                innerHTML += preRollQueryCheckbox("Recently Added");
+                innerHTML += preRollQueryCheckbox("More Like This");
+                innerHTML += preRollQueryCheckbox("Unplayed");
+                innerHTML += '</div>';
+                innerHTML += '<button onclick="removeListItem(this)" type="button" is="paper-icon-button-light" class="listItemButton btnRemovePath paper-icon-button-light" data-index="0">';
+                innerHTML += '<span class="material-icons remove_circle" aria-hidden="true"></span>';
+                innerHTML += '</button>';
+
+                opt.innerHTML = innerHTML;
+                return opt
+            };
+
+            function addTrailerRule(id) {
+                var selector = document.getElementById(id);
+                var newRule = trailerRuleFactory(id);
+                selector.appendChild(newRule);
+                return newRule;
+            };
+
+            function seasonalTagDefFactory() {
+                var opt = document.createElement('div'); 
+                opt.setAttribute("class", "listItem listItem-border"); 
+
+                var innerHTML = '<div class="listItemBody">'
+                innerHTML += '<label style="margin-right: 20px">';
+                innerHTML += 'Tag\n';
+                innerHTML += '<input type="string" id="tag-input" name="tag-input"/>';
+                innerHTML += '</label>';
+                innerHTML += '<label style="margin-right: 20px">';
+                innerHTML += 'Start Date\n';
+                innerHTML += '<input type="date" id="start-date" name="start-date" />';
+                innerHTML += '</label>';
+                innerHTML += '<label style="margin-right: 20px">';
+                innerHTML += 'End Date\n';
+                innerHTML += '<input type="date" id="end-date" name="end-date" />';
+                innerHTML += '</label>';
+                innerHTML += '</div>';
+                innerHTML += '<button onclick="removeListItem(this)" type="button" is="paper-icon-button-light" class="listItemButton btnRemovePath paper-icon-button-light" data-index="0">';
+                innerHTML += '<span class="material-icons remove_circle" aria-hidden="true"></span>';
+                innerHTML += '</button>';
+
+                opt.innerHTML = innerHTML;
+                return opt
+            }
+
+            function addSeasonalTagDef() {
+                var selector = document.getElementById('seasonal-tag-definitions');
+                var newTagDef = seasonalTagDefFactory();
+                selector.appendChild(newTagDef);
+                return newTagDef;
+            };
+
+            function selectElement(id, selection) {
+                let element = document.getElementById(id);
+                element.value = selection;
+            };
+
+            function initLibrarySelector(selectorID, optionID, optionValue) {
+                var selector = document.getElementById(selectorID);
+                mediaFolders.then((folderArray) => {
+                    var opt = document.createElement('option'); 
+                    opt.value = "-";
+                    opt.innerHTML = "-";
+                    selector.appendChild(opt);
+                    for (const folder of folderArray) {
+                        if (folder.CollectionType == "movies") {
+                            var opt = document.createElement('option'); 
+                            opt.value = folder.ItemId;
+                            opt.innerHTML = folder.Name;
+                            selector.appendChild(opt);
+                        };
+                    };
+                    selector.value = optionValue;
+                });
+            };
 
             $('.cinemaModeConfigurationPage').on('pageshow', function () {
                 Dashboard.showLoadingMsg();
+                clearList('trailerPreRollLibrarySelect');
+                clearList('featurePreRollLibrarySelect');
+                clearList('trailer-pre-roll-rules');
+                clearList('feature-pre-roll-rules');
+                clearList('trailer-rules');
+                clearList('seasonal-tag-definitions');
                 var page = this;
                 ApiClient.getPluginConfiguration(pluginId).then(function (config) {
-                    $('#trailer-prerolls', page).val(config.TrailerPreRollsPath);
-                    $('#feature-prerolls', page).val(config.FeaturePreRollsPath);
                     $('#number-trailers', page).val(config.NumberOfTrailers);
-                    document.getElementById('enable-trailer-preroll').checked = config.EnableTrailerPreroll;
-                    document.getElementById('enable-feature-preroll').checked = config.EnableFeaturePreroll;
-                    document.getElementById('enforce-rating-limit').checked = config.EnforceRatingLimit;
+                    document.getElementById('enforce-rating-limit-trailers').checked = config.EnforceRatingLimitTrailers;
+                    initLibrarySelector('trailerPreRollLibrarySelect', config.TrailerPreRollsLibrary, config.TrailerPreRollsLibrary);
+                    initLibrarySelector('featurePreRollLibrarySelect', config.FeaturePreRollsLibrary, config.FeaturePreRollsLibrary);
+                    initPreRollRules('trailer-pre-roll-rules', config.TrailerPreRollsSelections);
+                    initPreRollRules('feature-pre-roll-rules', config.FeaturePreRollsSelections);
+
+                    document.getElementById('enforce-rating-limit-trailer-pre-rolls').checked = config.TrailerPreRollsRatingLimit;
+                    document.getElementById('enforce-rating-limit-feature-pre-rolls').checked = config.FeaturePreRollsRatingLimit;
+                    document.getElementById('ignore-out-of-season-trailer-pre-rolls').checked = config.TrailerPreRollsIgnoreOutOfSeason;
+                    document.getElementById('ignore-out-of-season-feature-pre-rolls').checked = config.FeaturePreRollsIgnoreOutOfSeason;
+                    document.getElementById('trailer-rules-consume-mode').checked = config.TrailerConsumeMode;
+
+                    initSeasonalTagDefs(config.SeasonalTagDefinitions);
+                    initTrailerRules(config.TrailerSelectionRules);
                     Dashboard.hideLoadingMsg();
                 });
             });
@@ -124,17 +502,25 @@
             $('.cinemaModeConfigurationPage').on('submit', function () {
                 Dashboard.showLoadingMsg();
 
-                var TrailerPreRollsPath = $('#trailer-prerolls').val();
-                var FeaturePreRollsPath = $('#feature-prerolls').val();
+                var TrailerPreRollsLibrary = $('#trailerPreRollLibrarySelect').val();
+                var FeaturePreRollsLibrary = $('#featurePreRollLibrarySelect').val();
                 var NumberOfTrailers = $('#number-trailers').val();
                 ApiClient.getPluginConfiguration(pluginId).then(function (config) {
 
-                    config.TrailerPreRollsPath = TrailerPreRollsPath;
-                    config.FeaturePreRollsPath = FeaturePreRollsPath;
+                    config.TrailerPreRollsLibrary = TrailerPreRollsLibrary;
+                    config.FeaturePreRollsLibrary = FeaturePreRollsLibrary;
+                    config.TrailerPreRollsSelections = getPreRollRules('trailer-pre-roll-rules');
+                    config.FeaturePreRollsSelections = getPreRollRules('feature-pre-roll-rules');
+                    config.TrailerPreRollsRatingLimit = document.getElementById('enforce-rating-limit-trailer-pre-rolls').checked;
+                    config.FeaturePreRollsRatingLimit = document.getElementById('enforce-rating-limit-feature-pre-rolls').checked;
+                    config.TrailerPreRollsIgnoreOutOfSeason = document.getElementById('ignore-out-of-season-trailer-pre-rolls').checked;
+                    config.FeaturePreRollsIgnoreOutOfSeason = document.getElementById('ignore-out-of-season-feature-pre-rolls').checked;
+                    config.SeasonalTagDefinitions = getSeasonalTagDefs();
+                    config.TrailerSelectionRules = getTrailerRules();
                     config.NumberOfTrailers = parseInt(NumberOfTrailers);
-                    config.EnableTrailerPreroll = document.getElementById('enable-trailer-preroll').checked;
-                    config.EnableFeaturePreroll = document.getElementById('enable-feature-preroll').checked;
-                    config.EnforceRatingLimit = document.getElementById('enforce-rating-limit').checked;
+                    config.EnforceRatingLimitTrailers = document.getElementById('enforce-rating-limit-trailers').checked;
+                    config.TrailerConsumeMode = document.getElementById('trailer-rules-consume-mode').checked;
+
                     ApiClient.updatePluginConfiguration(pluginId, config).then(Dashboard.processPluginConfigurationUpdateResult);
                 });
 
