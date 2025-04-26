@@ -9,6 +9,14 @@
         "imageUrl": "https://github.com/CherryFloors/jellyfin-plugin-cinemamode/raw/main/Jellyfin.Plugin.CinemaMode/Images/jellyfin-plugin-cinemamode.jpg",
         "versions": [
             {
+                "checksum": "4df3efb4098438472ff1373f78ace427",
+                "changelog": "- New exclude out of season tags for pre-rolls logic that supports multiple out of season tags.\\n - Fix trailer rating enforcement to ignore \"Unrated\" and blank ratings.\\n - Target Jellyfin 10.10 ABI.\\n\n",
+                "targetAbi": "10.10.0.0",
+                "sourceUrl": "https://github.com/CherryFloors/jellyfin-plugin-cinemamode/releases/download/v0.5.1.0/cinemamode_0.5.1.0.zip",
+                "timestamp": "2025-04-26T16:51:15.224959",
+                "version": "0.5.1.0"
+            },
+            {
                 "checksum": "e65a5c7471acb68b0d32e98c7b53cf89",
                 "changelog": "- New exclude out of season tags for pre-rolls logic that supports multiple out of season tags. - Fix trailer rating enforcement to ignore \"Unrated\" and blank ratings. - Target Jellyfin 10.10 ABI\n",
                 "targetAbi": "10.10.0.0",
