@@ -143,11 +143,6 @@ namespace Jellyfin.Plugin.CinemaMode
             query.AncestorIds = new Guid[] { Guid.Parse(this.PreRollLibrary) };
             query.IncludeItemTypes = new BaseItemKind[] { BaseItemKind.Movie };
 
-            if (this.IgnoreOutOfSeason)
-            {
-               query.ExcludeTags = OutOfSeasonTags(); 
-            }
-
             if (this.EnforceRatingLimit)
             {
                 query.MaxParentalRating = this.Feature.InheritedParentalRatingValue;
@@ -206,6 +201,16 @@ namespace Jellyfin.Plugin.CinemaMode
             {
                 items = items.Where(pR => query.Tags.All(t => pR.Tags.Contains(t))).ToList();
             }
+
+            if (this.IgnoreOutOfSeason)
+            {
+                string[] excludeTags = OutOfSeasonTags(); 
+                if (excludeTags.Length > 0)
+                {
+                    items = items.Where(pR => !excludeTags.Any(t => pR.Tags.Contains(t))).ToList();
+                }
+            }
+            
             return items.OfType<Movie>().ToList();
         }
 
@@ -271,6 +276,7 @@ namespace Jellyfin.Plugin.CinemaMode
             if (this.Config.EnforceRatingLimitTrailers)
             {
                 baseQuery.HasOfficialRating = true;
+                baseQuery.HasParentalRating = true;
                 baseQuery.MaxParentalRating = this.Feature.InheritedParentalRatingValue;
             }
 
@@ -353,6 +359,13 @@ namespace Jellyfin.Plugin.CinemaMode
 
         public IEnumerable<IntroInfo> GetTrailers()
         {
+            // Early break if we are enforcing trailer limit and the feature is "unrated" or has no rating
+            if (this.Config.EnforceRatingLimitTrailers && this.Feature.InheritedParentalRatingValue == null)
+            {
+                this.Logger.LogInformation("|jellyfin-cinema-mode| Feature has no rating, skipping trailers");
+                yield break;
+            }
+
             // Selection Rules
             this.SelectionRuleQuery();
             while (this.Trailers.Count != 0 && this.Returned < this.Config.NumberOfTrailers)

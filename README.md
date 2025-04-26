@@ -96,7 +96,7 @@ from being played any other time of the year.
 Pre-Roll's use the 'Movies' content type allowing them to be assigned ratings. This setting can be used if you have 
 Pre-Roll's that may not be suitable for all audiences and will ensure the rating of the Pre-Roll does not exceed that of
 the feature. Rating limits for Pre-Rolls are slightly different from trailers as Pre-Roll's that are not assigned
-ratings are considered suitable for all audiences. Enabled by default.
+ratings (`Unrated` or left `blank`) are considered suitable for all audiences. Enabled by default.
 
 ### Trailers
 
@@ -130,11 +130,10 @@ reached. Disabled by default.
 
 #### Enforce Rating Limit
 
-This ensures the rating of the trailer content does not exceed that of the feature (i.e. trailers for an "R" rated movie
-will not be shown before a "PG-13" movie). This setting will cause any unrated content to have no trailers played prior
-and not be shown as a trailer. In this case "unrated" refers to content where the "Parental Rating" field is blank. It
-does not refer to content with an "NR" or "Not Rated" rating. Jellyfin considers content with a rating of "NR" as
-exceeding an "R" rating. Enabled by default. 
+This ensures the rating of the trailer content does not exceed that of the feature (i.e. trailers for an `R` rated movie
+will not be shown before a `PG-13` movie). This setting will cause any unrated content to have no trailers played prior
+and not be shown as a trailer. In this case unrated refers to any content where the "Parental Rating" meta data field is
+marked `Unrated` or left blank. 
 
 ### Seasonal Tag Definitions
 

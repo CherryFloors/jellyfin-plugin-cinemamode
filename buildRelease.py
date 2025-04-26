@@ -1,9 +1,11 @@
+from __future__ import annotations
 import subprocess
 import zipfile
 import json
 import yaml
 import datetime
 import sys
+from dataclasses import dataclass
 
 
 RELEASE_DIR = "Jellyfin.Plugin.CinemaMode/bin/release/net8.0/"
@@ -11,6 +13,7 @@ RELEASE_DLL = "Jellyfin.Plugin.CinemaMode/bin/release/net8.0/Jellyfin.Plugin.Cin
 RELEASE_META = "Jellyfin.Plugin.CinemaMode/bin/release/net8.0/meta.json"
 
 
+@dataclass
 class Meta:
     """ Meta """
 
@@ -27,42 +30,14 @@ class Meta:
     version: str
     zip_file_name: str
 
-    def __init__(
-            self,
-            category,
-            changelog,
-            description,
-            guid,
-            imageUrl,
-            name,
-            overview,
-            owner,
-            targetAbi,
-            timestamp,
-            version,
-            zip_file_name,
-        ) -> None:
-        self.category=category
-        self.changelog=changelog
-        self.description=description
-        self.guid=guid
-        self.imageUrl=imageUrl
-        self.name=name
-        self.overview=overview
-        self.owner=owner
-        self.targetAbi=targetAbi
-        self.timestamp=timestamp
-        self.version=version
-        self.zip_file_name=zip_file_name
-
     @classmethod
-    def get_meta(cls) -> "Meta":
+    def get_meta(cls) -> Meta:
 
         # Load build.yml
         with open("build.yaml", "r") as yml:
             build_yaml = yaml.safe_load(yml)
-        
-        return Meta(
+
+        return cls(
             category=build_yaml["category"],
             changelog=build_yaml["changelog"],
             description=build_yaml["description"],
@@ -76,8 +51,7 @@ class Meta:
             version=build_yaml["version"],
             zip_file_name=f'cinemamode_{build_yaml["version"]}.zip',
         )
-        
-       
+
     def save_file(self) -> None:
         out_dict = {
             "category": self.category,
@@ -96,6 +70,7 @@ class Meta:
             f.write(json.dumps(out_dict, indent=4))
 
 
+@dataclass
 class ManifestEntry:
     """ ManifestEntry """
 
@@ -106,31 +81,14 @@ class ManifestEntry:
     timestamp: str
     version: str
 
-    def __init__(
-            self,
-            checksum,
-            changelog,
-            targetAbi,
-            sourceUrl,
-            timestamp,
-            version,
-        ) -> None:
-        self.checksum=checksum
-        self.changelog=changelog
-        self.targetAbi=targetAbi
-        self.sourceUrl=sourceUrl
-        self.timestamp=timestamp
-        self.version=version
-
-
     @classmethod
-    def get_manifest_entry(cls, meta: Meta) -> "ManifestEntry":
+    def get_manifest_entry(cls, meta: Meta) -> ManifestEntry:
 
         checksum_args = ["md5sum", f"{RELEASE_DIR}/{meta.zip_file_name}"]
-        ProcOutput = subprocess.run(checksum_args, capture_output=True, text=True)
-        _checksum = ProcOutput.stdout.split(" ")[0]
-        
-        return ManifestEntry(
+        proc_output = subprocess.run(checksum_args, capture_output=True, text=True)
+        _checksum = proc_output.stdout.split(" ")[0]
+
+        return cls(
             checksum=_checksum,
             changelog=meta.changelog,
             targetAbi=meta.targetAbi,
@@ -138,7 +96,7 @@ class ManifestEntry:
             timestamp=meta.timestamp,
             version=meta.version,
         )
-    
+
     def to_output_dict(self) -> dict:
         return {
             "checksum": self.checksum,
@@ -148,17 +106,16 @@ class ManifestEntry:
             "timestamp": self.timestamp,
             "version": self.version,
         }
-    
+
     def add_manifest_entry(self) -> None:
         with open("manifest.json", "r") as f:
             manifest = json.load(f)
-        
+
         versions = [i["version"] for i in manifest[0]["versions"]]
         if self.version in versions:
             print("Current version is already in the manifest")
             sys.exit()
 
-        
         updated_versions = [self.to_output_dict()] + manifest[0]["versions"]
         manifest[0]["versions"] = updated_versions
 
@@ -166,13 +123,12 @@ class ManifestEntry:
             f.write(json.dumps(manifest, indent=4))
 
 
-
-
 def build() -> None:
     build_args = ["dotnet", "publish", "./Jellyfin.Plugin.CinemaMode/Jellyfin.Plugin.CinemaMode.csproj", "--configuration", "release", "--output", "bin"]
-    ProcOutput = subprocess.run(build_args, capture_output=True, text=True)
-    print(ProcOutput.stdout)
-    print(ProcOutput.stderr)
+    proc_output = subprocess.run(build_args, capture_output=True, text=True)
+    print(proc_output.stdout)
+    print(proc_output.stderr)
+
 
 def package(meta: Meta) -> None:
     # Get meta data
