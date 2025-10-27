@@ -15,6 +15,8 @@ addition, pre-roll videos can be played before and after the block of trailers. 
 level by turning off 'Cinema Mode' in the users Playback settings. Pro-tip: Skip any pre-roll or trailer by pressing the 
 next button in the player. For more details see the [User Guide](#user-guide)
 
+NEW: It is also possible to [automatically download trailers] (#auto-trailer-download) from TMDb / Youtube on a daily schedule as a task. The trailers will be stored locally, alongside the movies as "xyz-trailer.mp4".
+
 ## Installation
 
 To install this plugin, you will first need to add the repository in Jellyfin. Under 'Repositories' in the 'Plugin'
@@ -33,6 +35,23 @@ More information about installing plugins can be found in the official docs
 [here](https://jellyfin.org/docs/general/server/plugins/index.html#installing). A quick web search will also turn up
 plenty of great tutorial videos for setting up Jellyfin, including how to install 3rd party plugins.
 
+### Python 3 requirement (for auto trailer download only) 
+
+To automatically download trailers from YouTube **Python 3** is required on the host or inside the Docker container.  
+This is because the feature uses [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) under the hood to fetch and download trailers.
+
+#### 📦 Example: Dockerfile with Jellyfin + Python 3
+
+Here is an example Dockerfile for running Jellyfin w. latest Python3.
+
+```Dockerfile
+FROM jellyfin/jellyfin:latest
+
+# Install Python 3 and pip
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip && \
+    rm -rf /var/lib/apt/lists/*
+```
 ## User Guide
 
 <p align="center">
@@ -100,9 +119,11 @@ ratings (`Unrated` or left `blank`) are considered suitable for all audiences. E
 
 ### Trailers
 
-The plugin will automatically find any trailers you have stored alongside the movies in your Jellyfin library. The
+The plugin will find any trailers you have stored alongside the movies in your Jellyfin library. The
 plugin does not support playback of remote trailers. For information on how to add local trailers to Jellyfin, follow
 [this guide](https://jellyfin.org/docs/general/server/media/movies/#movie-extras). 
+
+There's now a new functionality built-in to [download trailers automatically](#auto-trailer-download) to the local library.
 
 #### Number of Trailers
 
@@ -147,12 +168,52 @@ Year will be ignored by the plugin.
 - **End Date** - The day the season ends. Included as part of the season. Only the Month and Day are important, the Year
 will be ignored by the plugin. 
 
+### Auto Trailer Download
+
+A scheduled task automatically downloads movie trailers from YouTube using data from [The Movie Database (TMDb)](https://www.themoviedb.org/).
+
+#### How it works
+
+- The scheduled task scans your configured movie libraries for items with a TMDb ID.
+- For each match, it queries TMDb for trailer metadata.
+- If a trailer is found, it is downloaded from YouTube using [`yt-dlp`](https://github.com/yt-dlp/yt-dlp).
+- Trailers are saved next to the movie file, named as `<Movie Title>-trailer.mp4`, following [Jellyfin’s local trailer naming convention](https://jellyfin.org/docs/general/server/media/videos/#trailers).
+
+These trailers are available for playback in Jellyfin and can be used in the Cinema Mode Trailer section.
+
+#### Configuration
+
+Go to the Plugin's configuration page to enable and control trailer downloading:
+
+- **TMDb API Key**  
+  Required to access TMDb trailer metadata.  
+  You can generate an API key from [developer.themoviedb.org](https://developer.themoviedb.org/docs/getting-started).
+
+- **Include All Libraries**  
+  When enabled, all movie libraries are scanned during the trailer download task.  
+  When disabled, you must select specific libraries manually.
+
+- **Selected Libraries**  
+  Only shown if "Include All Libraries" is unchecked.  
+  Select one or more movie libraries to limit trailer downloading to specific content.  
+  ⚠️ If no libraries are selected and "Include All Libraries" is off, **no trailers will be downloaded**.
+
+#### Scheduled Task
+
+- A Jellyfin scheduled task called **Download Trailers** will appear under scheduled tasks.
+- You can run it manually or let it run automatically on a schedule.
+- Make sure to configure your TMDb API key, the libraries that should be scanned and have Python3 installed before running the task.
+
 ### Troubleshooting
 
 If the plugin is not providing intros check the following:
 - "Cinema Mode" is enabled in your users playback settings.
 - You have some trailers stored alongside your media following the naming conventions given
 [here](https://jellyfin.org/docs/general/server/media/movies/#movie-extras).
+- Python3 is installed for the automatic trailer downloads.
+- Check the log files for any errors from Cinema Mode
+
+#### Configuration
 
 ## Build Process
 

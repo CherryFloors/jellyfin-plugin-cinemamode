@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using MediaBrowser.Model.Plugins;
 
@@ -75,6 +76,10 @@ namespace Jellyfin.Plugin.CinemaMode.Configuration
         public int NumberOfTrailers { get; set; }
         public bool TrailerConsumeMode { get; set; }
 
+        public string TmdbApiKey { get; set; }
+
+        public string[] TrailerDownloadLibraries { get; set; }
+
         public PluginConfiguration()
         {
             TrailerPreRollsLibrary = "-";
@@ -90,6 +95,10 @@ namespace Jellyfin.Plugin.CinemaMode.Configuration
             NumberOfTrailers = 2;
             EnforceRatingLimitTrailers = true;
             TrailerConsumeMode = false;
+
+            TrailerDownloadLibraries = [];
+
+            TmdbApiKey = string.Empty;
         }
     }
 }

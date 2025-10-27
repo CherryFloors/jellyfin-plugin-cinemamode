@@ -8,6 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="TMDbLib" Version="2.2.0" />
+    <PackageReference Include="YoutubeDlSharp" Version="1.1.2" />
     <PackageReference Include="Jellyfin.Controller" Version="10.11.0" />
     <PackageReference Include="Jellyfin.Model" Version="10.11.0" />
   </ItemGroup>

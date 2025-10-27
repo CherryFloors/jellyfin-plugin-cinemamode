@@ -21,6 +21,11 @@
                             Playback settings. For more information, access the user guide via the above help button. 
                             Pro-tip: Skip any pre-roll or trailer by pressing the next button in the player.
                         </p>
+                        <p>
+                            NEW: It is also possible to automatically download trailers from TMDb / Youtube on a daily
+                            schedule as a task.
+                            The trailers will be stored locally, alongside the movies as "xyz-trailer.mp4".
+                        </p>
                         <div>
                             <img alt="Cinema Mode Diagram" width="800" height="auto" src="https://github.com/CherryFloors/jellyfin-plugin-cinemamode/raw/main/Jellyfin.Plugin.CinemaMode/Images/cinema-mode-diagram.png"/>
                             <div class="fieldDescription">
@@ -197,8 +202,49 @@
                         <div class="paperList folderList" id="seasonal-tag-definitions">
                         </div>
                     </fieldset>
-                    <br/>
-                    <button is="emby-button" type="submit" class="raised button-submit block"><span>${Save}</span></button>
+
+                    <!-- Auto Trailer Download  -->
+                    <fieldset class="verticalSection verticalSection-extrabottompadding">
+                        <legend>
+                            <h3 class="sectionTitle">Auto Trailer Download</h3>
+                        </legend>
+                        <div class="inputContainer">
+                            <div>
+                                <label class="inputLabel inputLabelUnfocused" for="tmdb-api-key">TMDb API Key:</label>
+                                <a is="emby-linkbutton" class="raised button-alt headerHelpButton emby-button" target="_blank" href="https://github.com/CherryFloors/jellyfin-plugin-cinemamode#auto-trailer-download">Help</a>
+                            </div>
+                            <input type="password" id="tmdb-api-key" name="tmdb-api-key" is="emby-input" />
+                            <div class="fieldDescription">
+                                The API Key, which must be obtained from <a
+                                    href="https://developer.themoviedb.org/docs/getting-started"
+                                    target="_blank">TMDb</a> for the downloads to work.
+                            </div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="trailer-download-include-all-libraries"
+                                    name="trailer-download-include-all-libraries" />
+                                <span>Include All Libraries</span>
+                                <a is="emby-linkbutton" class="raised button-alt headerHelpButton emby-button" target="_blank" href="https://github.com/CherryFloors/jellyfin-plugin-cinemamode#auto-trailer-download">Help</a>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                When checked, trailers will be downloaded for all movie libraries. When unchecked, only
+                                trailers for selected libraries below will be downloaded.
+                            </div>
+                        </div>
+                        <div class="sectionTitleContainer flex align-items-center">
+                            <h4 class="sectionTitle">Selected Libraries</h4>
+                        </div>
+                        <div class="paperList folderList" id="trailer-download-libraries-list">
+                        </div>
+                        <div class="fieldDescription">
+                            Select only specific movie libraries to download trailers from. If no libraries are
+                            selected and "Include All Libraries" is unchecked, no trailers will be downloaded at all.
+                        </div>
+                    </fieldset>
+                    <br />
+                    <button is="emby-button" type="submit"
+                        class="raised button-submit block"><span>${Save}</span></button>
                 </form>
             </div>
         </div>
@@ -469,6 +515,93 @@
                 });
             };
 
+            function initLibraryCheckboxes(selectedLibraries, selectAllID, libraryListID, prefix) {
+                var container = document.getElementById(libraryListID);
+                container.innerHTML = "";
+
+                // Check if "all libraries" should be selected
+                var selectedArray = selectedLibraries;
+                var includeAllLibraries = selectedArray.includes("*") && selectedArray.length === 1;
+
+                var selectAllCheckBox = document.getElementById(selectAllID);
+                selectAllCheckBox.checked = includeAllLibraries;
+
+                mediaFolders.then((folderArray) => {
+
+                    // Add movie libraries as checkboxes
+                    for (const folder of folderArray) {
+                        if (folder.CollectionType == "movies") {
+                            var listItem = document.createElement('div');
+                            listItem.setAttribute("class", "listItem listItem-border");
+
+                            var isSelected = selectedArray.includes(folder.ItemId);
+
+
+                            // Create label
+                            var label = document.createElement('label');
+
+                            // Create checkbox input
+                            var input = document.createElement('input');
+                            input.setAttribute('is', 'emby-checkbox');
+                            input.setAttribute('type', 'checkbox');
+                            input.setAttribute('id', prefix + folder.ItemId);
+                            input.setAttribute('name', prefix + folder.ItemId);
+                            input.setAttribute('data-itemId', folder.ItemId);
+                            if (isSelected) {
+                                input.setAttribute('checked', 'true');
+                            }
+
+                            // Create span for label text
+                            var span = document.createElement('span');
+                            span.textContent = folder.Name;
+
+                            // Assemble elements
+                            label.appendChild(input);
+                            label.appendChild(span);
+                            listItem.appendChild(label);
+
+                            container.appendChild(listItem);
+                        }
+                    }
+
+                    // Add event listener for "Include All Libraries" checkbox
+                    document.getElementById(selectAllID).addEventListener('change', function () {
+                        var checkboxes = container.querySelectorAll('input[type="checkbox"]');
+                        for (let checkbox of checkboxes) {
+                            checkbox.checked = this.checked;
+                            checkbox.disabled = this.checked;
+                        }
+                    });
+
+                    // Run same logic right away: if "includeAll" is ticked, all other checkboxes should be checked and disabled
+                    if (includeAllLibraries) {
+                        var checkboxes = container.querySelectorAll('input[type="checkbox"]');
+                        for (let checkbox of checkboxes) {
+                            checkbox.checked = true;
+                            checkbox.disabled = true;
+                        }
+                    }
+                });
+            }
+
+            function getSelectedLibrariesFromCheckboxes(selectAllID, libraryListID, prefix) {
+                var includeAllLibraries = document.getElementById(selectAllID).checked;
+                if (includeAllLibraries) {
+                    return ["*"];
+                }
+
+                var container = document.getElementById(libraryListID);
+                var checkboxes = container.querySelectorAll('input[type="checkbox"]:checked');
+                var selected = [];
+
+                for (let checkbox of checkboxes) {
+                    var id = checkbox.getAttribute("data-itemId");
+                    selected.push(id);
+                }
+
+                return selected;
+            }
+
             $('.cinemaModeConfigurationPage').on('pageshow', function () {
                 Dashboard.showLoadingMsg();
                 clearList('trailerPreRollLibrarySelect');
@@ -480,6 +613,7 @@
                 var page = this;
                 ApiClient.getPluginConfiguration(pluginId).then(function (config) {
                     $('#number-trailers', page).val(config.NumberOfTrailers);
+                    $('#tmdb-api-key', page).val(config.TmdbApiKey);
                     document.getElementById('enforce-rating-limit-trailers').checked = config.EnforceRatingLimitTrailers;
                     initLibrarySelector('trailerPreRollLibrarySelect', config.TrailerPreRollsLibrary, config.TrailerPreRollsLibrary);
                     initLibrarySelector('featurePreRollLibrarySelect', config.FeaturePreRollsLibrary, config.FeaturePreRollsLibrary);
@@ -494,6 +628,13 @@
 
                     initSeasonalTagDefs(config.SeasonalTagDefinitions);
                     initTrailerRules(config.TrailerSelectionRules);
+
+                    initLibraryCheckboxes(config.TrailerDownloadLibraries,
+                        'trailer-download-include-all-libraries',
+                        'trailer-download-libraries-list',
+                        'trailer-download-list-'
+                    );
+
                     Dashboard.hideLoadingMsg();
                 });
             });
@@ -504,6 +645,7 @@
                 var TrailerPreRollsLibrary = $('#trailerPreRollLibrarySelect').val();
                 var FeaturePreRollsLibrary = $('#featurePreRollLibrarySelect').val();
                 var NumberOfTrailers = $('#number-trailers').val();
+                var TmdbApiKey = $('#tmdb-api-key').val();
                 ApiClient.getPluginConfiguration(pluginId).then(function (config) {
 
                     config.TrailerPreRollsLibrary = TrailerPreRollsLibrary;
@@ -517,8 +659,10 @@
                     config.SeasonalTagDefinitions = getSeasonalTagDefs();
                     config.TrailerSelectionRules = getTrailerRules();
                     config.NumberOfTrailers = parseInt(NumberOfTrailers);
+                    config.TmdbApiKey = TmdbApiKey;
                     config.EnforceRatingLimitTrailers = document.getElementById('enforce-rating-limit-trailers').checked;
                     config.TrailerConsumeMode = document.getElementById('trailer-rules-consume-mode').checked;
+                    config.TrailerDownloadLibraries = getSelectedLibrariesFromCheckboxes('trailer-download-include-all-libraries', 'trailer-download-libraries-list', 'trailer-download-list-');
 
                     ApiClient.updatePluginConfiguration(pluginId, config).then(Dashboard.processPluginConfigurationUpdateResult);
                 });
