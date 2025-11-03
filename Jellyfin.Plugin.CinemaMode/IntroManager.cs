@@ -219,10 +219,14 @@ namespace Jellyfin.Plugin.CinemaMode
         public IntroInfo? GetPreRoll()
         {
             List<Movie> preRolls;
+            
+            Logger.LogDebug($"|jellyfin-cinema-mode| Fetching Pre-Rolls Type: {this.Category} User: {this.User} Library: {this.PreRollLibrary}");
+            
             foreach (PreRollSelectionConfig SelectConfig in this.PreRollsSelections)
             {
                 preRolls = QueryPreRolls(SelectConfig);
-                if (preRolls.Count > 0) {
+                if (preRolls.Count > 0)
+                {
                     int idx = this.RNG.Next(preRolls.Count);
                     Video preRoll = preRolls.ElementAt(idx);
                     return new IntroInfo { ItemId = preRoll.Id, Path = preRoll.Path };
@@ -436,9 +440,10 @@ namespace Jellyfin.Plugin.CinemaMode
 
         public IEnumerable<IntroInfo> Get(BaseItem item, User user)
         {
-
+            Logger.LogDebug("|jellyfin-cinema-mode| GET called for item: {ItemName} by user: {UserName}", item.Name, user.Username);
             if (Plugin.Instance.Configuration.TrailerPreRollsLibrary != "-")
             {
+                Logger.LogDebug("|jellyfin-cinema-mode| Fetching Trailer Pre-Roll from Library {Library}", Plugin.Instance.Configuration.TrailerPreRollsLibrary);
                 IntroInfo? trailerPreRoll = null;
                 try
                 {
@@ -453,17 +458,22 @@ namespace Jellyfin.Plugin.CinemaMode
 
                 if (trailerPreRoll != null)
                 {
+                    Logger.LogDebug("|jellyfin-cinema-mode| Trailer Pre-Roll ItemId: {ItemId}, Path: {Path}", trailerPreRoll.ItemId, trailerPreRoll.Path);
+
                     yield return trailerPreRoll;
                 }
             }
 
             if (Plugin.Instance.Configuration.NumberOfTrailers > 0)
             {
+                Logger.LogDebug("|jellyfin-cinema-mode| Fetching Trailers");
                 List<IntroInfo> trailers = new List<IntroInfo>();
                 try
                 {
                     TrailerSelector trailerSelector = new TrailerSelector(item, user, Plugin.Instance.Configuration, this.Logger);
                     trailers = trailerSelector.GetTrailers().ToList();
+
+                    Logger.LogDebug("|jellyfin-cinema-mode| Fetched {Count} Trailers for item: {ItemName} by user: {UserName}", trailers.Count, item.Name, user.Username);
                 }
                 catch (System.Exception e)
                 {
@@ -479,6 +489,8 @@ namespace Jellyfin.Plugin.CinemaMode
 
             if (Plugin.Instance.Configuration.FeaturePreRollsLibrary != "-")
             {
+                Logger.LogDebug("|jellyfin-cinema-mode| Fetching Feature Pre-Roll from Library {Library}", Plugin.Instance.Configuration.FeaturePreRollsLibrary);
+                
                 IntroInfo? featurePreRoll = null;
                 try
                 {
