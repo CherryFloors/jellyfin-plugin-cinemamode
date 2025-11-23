@@ -1,8 +1,8 @@
 name: 'Cinema Mode'
 guid: '5fcefe1b-df1f-4596-ac57-f2f939c294c5'
-version: '0.5.1.0'
-targetAbi: '10.10.0.0'
-framework: 'net8.0'
+version: '0.6.0.0'
+targetAbi: '10.11.0.0'
+framework: 'net9.0'
 owner: 'CherryFloors'
 overview: 'Enable Cinema Mode with local trailers and pre-rolls.'
 description: >
@@ -10,7 +10,6 @@ description: >
 category: 'General'
 artifacts:
 - 'Jellyfin.Plugin.CinemaMode.dll'
-changelog: >
-  - New exclude out of season tags for pre-rolls logic that supports multiple out of season tags.\n
-  - Fix trailer rating enforcement to ignore "Unrated" and blank ratings.\n
-  - Target Jellyfin 10.10 ABI.\n
+changelog:
+  - Target Jellyfin 10.11 ABI and fix broken API.
+  - Update "More Like This" trailer selection.

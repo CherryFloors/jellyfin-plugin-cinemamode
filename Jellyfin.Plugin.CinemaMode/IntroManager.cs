@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Jellyfin.Data.Entities;
+using Jellyfin.Database.Implementations.Entities;
+using MediaBrowser.Model.Entities;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Library;
@@ -127,7 +128,7 @@ namespace Jellyfin.Plugin.CinemaMode
                 InternalItemsQuery query = new InternalItemsQuery();
                 query.IncludeItemTypes = new BaseItemKind[] { BaseItemKind.Studio };
                 query.Name = studio;
-                List<BaseItem> items = Plugin.LibraryManager.GetItemList(query);
+                IReadOnlyList<BaseItem> items = Plugin.LibraryManager.GetItemList(query);
                 foreach (BaseItem item in items)
                 {
                     ids.Add(item.Id);
@@ -140,12 +141,13 @@ namespace Jellyfin.Plugin.CinemaMode
         public InternalItemsQuery QueryBuilder(PreRollSelectionConfig? SelectionConfig)
         {
             InternalItemsQuery query = new InternalItemsQuery(this.User);
-            query.AncestorIds = new Guid[] { Guid.Parse(this.PreRollLibrary) };
+            query.ParentId = Guid.Parse(this.PreRollLibrary);
+            query.Recursive = true;
             query.IncludeItemTypes = new BaseItemKind[] { BaseItemKind.Movie };
 
             if (this.EnforceRatingLimit)
             {
-                query.MaxParentalRating = this.Feature.InheritedParentalRatingValue;
+                query.MaxParentalRating = this.Feature.GetParentalRatingScore();
             }
 
             if (SelectionConfig == null)
@@ -196,7 +198,7 @@ namespace Jellyfin.Plugin.CinemaMode
         public List<Movie> QueryPreRolls(PreRollSelectionConfig? SelectionConfig)
         {
             InternalItemsQuery query = QueryBuilder(SelectionConfig);
-            List<BaseItem> items = Plugin.LibraryManager.GetItemList(query);
+            IReadOnlyList<BaseItem> items = Plugin.LibraryManager.GetItemList(query);
             if (SelectionConfig != null && SelectionConfig.AllTags)
             {
                 items = items.Where(pR => query.Tags.All(t => pR.Tags.Contains(t))).ToList();
@@ -277,7 +279,8 @@ namespace Jellyfin.Plugin.CinemaMode
             {
                 baseQuery.HasOfficialRating = true;
                 baseQuery.HasParentalRating = true;
-                baseQuery.MaxParentalRating = this.Feature.InheritedParentalRatingValue;
+                baseQuery.MinParentalRating = new ParentalRatingScore(0, 0);
+                baseQuery.MaxParentalRating = this.Feature.GetParentalRatingScore();
             }
 
             baseQuery.IsPlayed = IsPlayed;
@@ -316,7 +319,9 @@ namespace Jellyfin.Plugin.CinemaMode
             
             if (config.MoreLikeThis)
             {
-                configQuery.SimilarTo = this.Feature;
+                configQuery.Genres = this.Feature.Genres;
+                configQuery.Tags = this.Feature.Tags;
+                configQuery.EnableGroupByMetadataKey = true;
             }
 
             return configQuery;
@@ -324,8 +329,16 @@ namespace Jellyfin.Plugin.CinemaMode
 
         private void QueryTrailers(InternalItemsQuery query)
         {
-            List<BaseItem> baseItems = Plugin.LibraryManager.GetItemList(query);
-            List<Movie> movies = baseItems.OfType<Movie>().Where(x => x.LocalTrailers.Count > 0).ToList();
+            IReadOnlyList<BaseItem> baseItems = Plugin.LibraryManager.GetItemList(query);
+            IEnumerable<Movie> moviesIter = baseItems.OfType<Movie>().Where(x => x.LocalTrailers.Count > 0);
+
+            // TODO: Remove when jf team fixes min rating query
+            if (this.Config.EnforceRatingLimitTrailers)
+            {
+                moviesIter = moviesIter.Where(x => x.InheritedParentalRatingValue.HasValue);
+            }
+
+            List<Movie> movies = moviesIter.ToList();
             if (movies is not null)
             {
                 this.Trailers = movies;
