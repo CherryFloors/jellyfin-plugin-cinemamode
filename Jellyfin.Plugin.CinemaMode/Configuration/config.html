@@ -197,6 +197,30 @@
                         <div class="paperList folderList" id="seasonal-tag-definitions">
                         </div>
                     </fieldset>
+
+                    <!-- Included Libraries -->
+                    <fieldset class="verticalSection verticalSection-extrabottompadding">
+                        <legend>
+                            <h3 class="sectionTitle">Included Libraries</h3>
+                        </legend>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="include-all-libraries" name="include-all-libraries" />
+                                <span>Include All Libraries</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                When checked, Cinema Mode will be active for all movie libraries. When unchecked, only selected libraries below will be included.
+                            </div>
+                        </div>
+                        <div class="sectionTitleContainer flex align-items-center"> 
+                            <h4 class="sectionTitle">Specific Libraries</h4> 
+                        </div>
+                        <div class="paperList folderList" id="included-libraries-list">
+                        </div>
+                        <div class="fieldDescription">
+                            Select specific movie libraries where Cinema Mode should be active. If no libraries are selected and "Include All Libraries" is unchecked, Cinema Mode will be disabled.
+                        </div>
+                    </fieldset>
                     <br/>
                     <button is="emby-button" type="submit" class="raised button-submit block"><span>${Save}</span></button>
                 </form>
@@ -469,6 +493,113 @@
                 });
             };
 
+            function initMultiselectLibrarySelector(selectorID, selectedLibraries) {
+                var selector = document.getElementById(selectorID);
+                mediaFolders.then((folderArray) => {
+                    // Clear existing options
+                    selector.innerHTML = "";
+                    
+                    // Add movie libraries
+                    for (const folder of folderArray) {
+                        if (folder.CollectionType == "movies") {
+                            var opt = document.createElement('option'); 
+                            opt.value = folder.Name; // Use library name as value
+                            opt.innerHTML = folder.Name;
+                            selector.appendChild(opt);
+                        };
+                    };
+                    
+                    // Set selected values
+                    if (selectedLibraries && selectedLibraries.trim() !== "") {
+                        var selectedArray = selectedLibraries.split(',').map(lib => lib.trim());
+                        for (let i = 0; i < selector.options.length; i++) {
+                            if (selectedArray.includes(selector.options[i].value)) {
+                                selector.options[i].selected = true;
+                            }
+                        }
+                    }
+                });
+            };
+
+            function getSelectedLibraries(selectorID) {
+                var selector = document.getElementById(selectorID);
+                var selected = [];
+                for (let i = 0; i < selector.options.length; i++) {
+                    if (selector.options[i].selected) {
+                        selected.push(selector.options[i].value);
+                    }
+                }
+                return selected.join(',');
+            }
+
+            function initLibraryCheckboxes(selectedLibraries) {
+                var container = document.getElementById('included-libraries-list');
+                container.innerHTML = "";
+                
+                mediaFolders.then((folderArray) => {
+                    var selectedArray = [];
+                    if (selectedLibraries && selectedLibraries.trim() !== "") {
+                        selectedArray = selectedLibraries.split(',').map(lib => lib.trim());
+                    }
+                    
+                    // Check if "all libraries" should be selected
+                    var includeAllLibraries = selectedArray.length === 0;
+                    document.getElementById('include-all-libraries').checked = includeAllLibraries;
+                    
+                    // Add movie libraries as checkboxes
+                    for (const folder of folderArray) {
+                        if (folder.CollectionType == "movies") {
+                            var listItem = document.createElement('div');
+                            listItem.setAttribute("class", "listItem listItem-border");
+                            
+                            var isSelected = selectedArray.includes(folder.Name);
+                            
+                            var innerHTML = '<div class="listItemBody">';
+                            innerHTML += '<label>';
+                            innerHTML += '<input type="checkbox" id="library-' + folder.Name.replace(/\s+/g, '-') + '" name="library-' + folder.Name.replace(/\s+/g, '-') + '"';
+                            if (isSelected) {
+                                innerHTML += ' checked';
+                            }
+                            innerHTML += ' />';
+                            innerHTML += '<span>' + folder.Name + '</span>';
+                            innerHTML += '</label>';
+                            innerHTML += '</div>';
+                            
+                            listItem.innerHTML = innerHTML;
+                            container.appendChild(listItem);
+                        }
+                    }
+                    
+                    // Add event listener for "Include All Libraries" checkbox
+                    document.getElementById('include-all-libraries').addEventListener('change', function() {
+                        var checkboxes = container.querySelectorAll('input[type="checkbox"]');
+                        for (let checkbox of checkboxes) {
+                            checkbox.checked = this.checked;
+                            checkbox.disabled = this.checked;
+                        }
+                    });
+                });
+            }
+
+            function getSelectedLibrariesFromCheckboxes() {
+                var includeAllLibraries = document.getElementById('include-all-libraries').checked;
+                if (includeAllLibraries) {
+                    return ""; // Empty string means all libraries
+                }
+                
+                var container = document.getElementById('included-libraries-list');
+                var checkboxes = container.querySelectorAll('input[type="checkbox"]:checked');
+                var selected = [];
+                
+                for (let checkbox of checkboxes) {
+                    // Extract library name from checkbox id (remove "library-" prefix and replace dashes with spaces)
+                    var libraryName = checkbox.id.replace('library-', '').replace(/-/g, ' ');
+                    selected.push(libraryName);
+                }
+                
+                return selected.join(',');
+            }
+
             $('.cinemaModeConfigurationPage').on('pageshow', function () {
                 Dashboard.showLoadingMsg();
                 clearList('trailerPreRollLibrarySelect');
@@ -494,6 +625,7 @@
 
                     initSeasonalTagDefs(config.SeasonalTagDefinitions);
                     initTrailerRules(config.TrailerSelectionRules);
+                    initLibraryCheckboxes(config.IncludedLibraries);
                     Dashboard.hideLoadingMsg();
                 });
             });
@@ -519,6 +651,7 @@
                     config.NumberOfTrailers = parseInt(NumberOfTrailers);
                     config.EnforceRatingLimitTrailers = document.getElementById('enforce-rating-limit-trailers').checked;
                     config.TrailerConsumeMode = document.getElementById('trailer-rules-consume-mode').checked;
+                    config.IncludedLibraries = getSelectedLibrariesFromCheckboxes();
 
                     ApiClient.updatePluginConfiguration(pluginId, config).then(Dashboard.processPluginConfigurationUpdateResult);
                 });

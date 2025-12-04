@@ -24,12 +24,28 @@ namespace Jellyfin.Plugin.CinemaMode
 
         public static ILibraryManager LibraryManager { get; private set; }
 
+        /// <summary>
+        /// Reference to the IntroProvider instance for cache management.
+        /// </summary>
+        public static IntroProvider IntroProviderInstance { get; set; }
+
         public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ILibraryManager libraryManager, IServerApplicationPaths serverApplicationPaths)
             : base(applicationPaths, xmlSerializer)
         {
             Instance = this;
             LibraryManager = libraryManager;
             ServerApplicationPaths = serverApplicationPaths;
+        }
+
+        /// <summary>
+        /// Clears the IntroProvider cache when configuration is updated.
+        /// </summary>
+        public static void ClearIntroProviderCache()
+        {
+            if (IntroProviderInstance != null)
+            {
+                IntroProviderInstance.ClearCache();
+            }
         }
 
         public IEnumerable<PluginPageInfo> GetPages()

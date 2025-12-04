@@ -74,6 +74,7 @@ namespace Jellyfin.Plugin.CinemaMode.Configuration
         public bool EnforceRatingLimitTrailers { get; set; }
         public int NumberOfTrailers { get; set; }
         public bool TrailerConsumeMode { get; set; }
+        public string IncludedLibraries { get; set; }
 
         public PluginConfiguration()
         {
@@ -90,6 +91,7 @@ namespace Jellyfin.Plugin.CinemaMode.Configuration
             NumberOfTrailers = 2;
             EnforceRatingLimitTrailers = true;
             TrailerConsumeMode = false;
+            IncludedLibraries = "";
         }
     }
 }
