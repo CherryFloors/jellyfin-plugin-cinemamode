@@ -9,3 +9,5 @@ artifacts
 
 # dev
 build.sh
+devserver/node_modules
+tests/*/node_modules

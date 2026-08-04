@@ -1,0 +1,5 @@
+[
+    { "CollectionType": "movies", "ItemId": "folder-movies",   "Name": "Movies"    },
+    { "CollectionType": "movies", "ItemId": "folder-prerolls", "Name": "Pre-Rolls" },
+    { "CollectionType": "tvshows","ItemId": "folder-tv",       "Name": "TV Shows"  }
+]

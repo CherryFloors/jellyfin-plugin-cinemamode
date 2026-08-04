@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html class="preload">
+<head>
+    <meta charset="utf-8" />
+    <title>Cinema Mode — Dev Server</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="/mock-api.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: sans-serif; background: #1a1a1a; color: #eee; }
+        #dev-toolbar {
+            background: #0d0d1a;
+            border-bottom: 1px solid #333;
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: #aaa;
+        }
+        #dev-toolbar strong { color: #7eb8f7; }
+        #dev-save-banner {
+            display: none;
+            background: #27ae60;
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 3px;
+        }
+        #app { padding: 16px; }
+    </style>
+</head>
+<body>
+    <div id="dev-toolbar">
+        <strong>Cinema Mode</strong>
+        <span>dev server</span>
+        <span id="dev-save-banner">Saved</span>
+    </div>
+    <div id="app">Loading...</div>
+
+    <script>
+        // Inject Jellyfin's inline styles and CSS bundles (fire-and-forget)
+        fetch('/api/jellyfin-assets')
+            .then(function(r) { return r.json(); })
+            .then(function(assets) {
+                // Inline styles contain .preload { background-color: #101010 } etc.
+                if (assets.inlineStyles) {
+                    var style = document.createElement('style');
+                    style.textContent = assets.inlineStyles;
+                    document.head.appendChild(style);
+                }
+                (assets.css || []).forEach(function(href) {
+                    var link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = '/web/' + href;
+                    document.head.appendChild(link);
+                });
+            });
+
+        // Log button clicks via event delegation
+        document.getElementById('app').addEventListener('click', function (e) {
+            var btn = e.target.closest('button');
+            if (!btn) return;
+            var label = (btn.title || btn.querySelector('span')?.textContent || btn.textContent).trim().slice(0, 60);
+            console.log('[cinema-mode] click:', label || btn.type);
+        });
+
+        // Hot reload: reconnect and reload when a config file changes
+        (function connectSSE() {
+            var es = new EventSource('/api/hotreload');
+            es.onmessage = function() { window.location.reload(); };
+            es.onerror = function() {
+                es.close();
+                setTimeout(connectSSE, 2000);
+            };
+        })();
+
+        // Fetch config.html, strip Jellyfin-specific script references,
+        // inject the DOM, then load config.js and initialize the page.
+        fetch('/config/config.html')
+            .then(function(r) { return r.text(); })
+            .then(function(html) {
+                var doc = new DOMParser().parseFromString(html, 'text/html');
+                doc.querySelectorAll('script').forEach(function(s) { s.remove(); });
+                document.getElementById('app').innerHTML = doc.body.innerHTML;
+
+                var script = document.createElement('script');
+                script.src = '/config/config.js';
+                script.onload = function() {
+                    $('div.cinemaModeConfigurationPage').trigger('pageshow');
+                };
+                document.body.appendChild(script);
+            });
+    </script>
+</body>
+</html>

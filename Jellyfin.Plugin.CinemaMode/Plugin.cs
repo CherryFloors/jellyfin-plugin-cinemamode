@@ -39,6 +39,11 @@ namespace Jellyfin.Plugin.CinemaMode
                 Name = Name,
                 EmbeddedResourcePath = GetType().Namespace + ".Configuration.config.html"
             };
+            yield return new PluginPageInfo
+            {
+                Name = "CinemaModeConfig",
+                EmbeddedResourcePath = GetType().Namespace + ".Configuration.config.js"
+            };
         }
     }
 }

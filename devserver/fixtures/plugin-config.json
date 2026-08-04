@@ -1,0 +1,25 @@
+{
+  "TrailerPreRollsLibrary": "folder-movies",
+  "FeaturePreRollsLibrary": "-",
+  "TrailerPreRollsSelections": [
+    {
+      "Name": false,
+      "Year": false,
+      "Decade": false,
+      "Seasonal": false,
+      "Genre": false,
+      "Studios": false,
+      "AllTags": false
+    }
+  ],
+  "FeaturePreRollsSelections": [],
+  "TrailerPreRollsRatingLimit": false,
+  "FeaturePreRollsRatingLimit": true,
+  "TrailerPreRollsIgnoreOutOfSeason": true,
+  "FeaturePreRollsIgnoreOutOfSeason": true,
+  "SeasonalTagDefinitions": [],
+  "TrailerSelectionRules": [],
+  "EnforceRatingLimitTrailers": true,
+  "NumberOfTrailers": 3,
+  "TrailerConsumeMode": false
+}
