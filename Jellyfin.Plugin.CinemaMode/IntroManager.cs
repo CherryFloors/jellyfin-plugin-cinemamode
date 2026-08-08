@@ -89,7 +89,14 @@ namespace Jellyfin.Plugin.CinemaMode
             if (today >= startDate && today <= endDate)
             {
                 return true;
-            }   
+            }
+
+            // Check previous year's season for cross-year ranges (e.g. Nov→Jan)
+            if (yearDiff > 0 && today >= startDate.AddYears(-1) && today <= endDate.AddYears(-1))
+            {
+                return true;
+            }
+
             return false;
         }
 
