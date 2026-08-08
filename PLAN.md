@@ -6,16 +6,16 @@ This repo contains a plugin for Jellyfin media server. I need to make the follow
 - [x] I would like to make that loop tighter, a small dev server where I can see changes with hot reload so I can get realtime feedback on UI changes.
 
 ## Testing
-- Unit tests 
-    - I need coverage for Jellyfin.Plugin.CinemaMode/Configuration
-    - I need coverage for Jellyfin.Plugin.CinemaMode/IntroManager.cs
-    - I need coverage for Jellyfin.Plugin.CinemaMode/IntroProvider.cs
-    - Abiility to extensively mock the jellyfin objects needed for test coverage 
-        - ideally with a Factory method for each tpye needing mocking so they can be procedurally generated from text based configurations where differnt vlaues are needed for differnt tests
-- Integration Testing
-    - Use docker containers for integration testing
-    - Mock media directory using empty files and nfos, maybe 
-    - Explore installing the jellyfin libraries and hitting the C# API without a server instance running for CI integration testing. Want to have tests where jellyfins library code is hitting an actual jellyfin db
+- [ ] Unit tests 
+    - [x] I need coverage for Jellyfin.Plugin.CinemaMode/Configuration
+    - [ ] I need coverage for Jellyfin.Plugin.CinemaMode/IntroManager.cs
+    - [ ] I need coverage for Jellyfin.Plugin.CinemaMode/IntroProvider.cs
+    - [ ] Abiility to extensively mock the jellyfin objects needed for test coverage 
+        - [ ] ideally with a Factory method for each tpye needing mocking so they can be procedurally generated from text based configurations where differnt vlaues are needed for differnt tests
+- [ ] Integration Testing
+    - [ ] Use docker containers for integration testing
+    - [ ] Mock media directory using empty files and nfos, maybe 
+    - [ ] Explore installing the jellyfin libraries and hitting the C# API without a server instance running for CI integration testing. Want to have tests where jellyfins library code is hitting an actual jellyfin db
 
 ## Automation and Developer Workflow
 - Automated CI actions for testing

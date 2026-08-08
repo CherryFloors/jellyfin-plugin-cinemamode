@@ -23,7 +23,7 @@ namespace Jellyfin.Plugin.CinemaMode
 
     class PreRollSelector
     {
-        private PreRollType Category { get; } 
+        private PreRollType Category { get; }
         private Random RNG { get; }
         private BaseItem Feature { get; }
         private User User { get; }
@@ -33,15 +33,19 @@ namespace Jellyfin.Plugin.CinemaMode
         private bool EnforceRatingLimit { get; }
         private List<SeasonalTagDefinition> SeasonalTagDefinitions { get; }
         private readonly ILogger Logger;
+        private readonly ILibraryManager _libraryManager;
+        private readonly TimeProvider _timeProvider;
 
 
-        public PreRollSelector(PreRollType Category, BaseItem Feature, User User, PluginConfiguration Config, ILogger logger)
+        public PreRollSelector(PreRollType Category, BaseItem Feature, User User, PluginConfiguration Config, ILibraryManager libraryManager, TimeProvider timeProvider, ILogger logger)
         {
             this.Category = Category;
             this.RNG = new Random();
             this.Feature = Feature;
             this.User = User;
             this.Logger = logger;
+            this._libraryManager = libraryManager;
+            this._timeProvider = timeProvider;
 
             if (Category == PreRollType.TrailerPreRoll)
             {
@@ -91,7 +95,7 @@ namespace Jellyfin.Plugin.CinemaMode
 
         public List<String> PreRollSeasonTags()
         {
-            DateTime today = DateTime.Now;
+            DateTime today = this._timeProvider.GetLocalNow().DateTime;
             List<string> Tags = new List<string>();
 
             foreach (SeasonalTagDefinition seasonalTag in this.SeasonalTagDefinitions)
@@ -107,7 +111,7 @@ namespace Jellyfin.Plugin.CinemaMode
 
         private string[] OutOfSeasonTags()
         {
-            DateTime today = DateTime.Now;
+            DateTime today = this._timeProvider.GetLocalNow().DateTime;
             List<string> Tags = new List<string>();
 
             foreach (SeasonalTagDefinition seasonalTag in this.SeasonalTagDefinitions)
@@ -128,11 +132,11 @@ namespace Jellyfin.Plugin.CinemaMode
                 InternalItemsQuery query = new InternalItemsQuery();
                 query.IncludeItemTypes = new BaseItemKind[] { BaseItemKind.Studio };
                 query.Name = studio;
-                IReadOnlyList<BaseItem> items = Plugin.LibraryManager.GetItemList(query);
+                IReadOnlyList<BaseItem> items = this._libraryManager.GetItemList(query);
                 foreach (BaseItem item in items)
                 {
                     ids.Add(item.Id);
-                } 
+                }
             }
             return ids.ToArray();
         }
@@ -198,7 +202,7 @@ namespace Jellyfin.Plugin.CinemaMode
         public List<Movie> QueryPreRolls(PreRollSelectionConfig? SelectionConfig)
         {
             InternalItemsQuery query = QueryBuilder(SelectionConfig);
-            IReadOnlyList<BaseItem> items = Plugin.LibraryManager.GetItemList(query);
+            IReadOnlyList<BaseItem> items = this._libraryManager.GetItemList(query);
             if (SelectionConfig != null && SelectionConfig.AllTags)
             {
                 items = items.Where(pR => query.Tags.All(t => pR.Tags.Contains(t))).ToList();
@@ -253,8 +257,10 @@ namespace Jellyfin.Plugin.CinemaMode
         private User User { get; }
         private List<TrailerSelectionConfig> selectionRules { get; set; } = new List<TrailerSelectionConfig>() { };
         private readonly ILogger Logger;
+        private readonly ILibraryManager _libraryManager;
+        private readonly TimeProvider _timeProvider;
 
-        public TrailerSelector(BaseItem Feature, User User, Jellyfin.Plugin.CinemaMode.Configuration.PluginConfiguration Config, ILogger logger)
+        public TrailerSelector(BaseItem Feature, User User, Jellyfin.Plugin.CinemaMode.Configuration.PluginConfiguration Config, ILibraryManager libraryManager, TimeProvider timeProvider, ILogger logger)
         {
             this.ShownTrailers.Add(Feature.Id);
             this.RNG = new Random();
@@ -262,6 +268,8 @@ namespace Jellyfin.Plugin.CinemaMode
             this.Feature = Feature;
             this.User = User;
             this.Logger = logger;
+            this._libraryManager = libraryManager;
+            this._timeProvider = timeProvider;
             foreach (TrailerSelectionConfig selectionConfig in Config.TrailerSelectionRules)
             {
                this.selectionRules.Add(selectionConfig); 
@@ -314,7 +322,7 @@ namespace Jellyfin.Plugin.CinemaMode
 
             if (config.RecentlyAdded)
             {
-                configQuery.MinDateCreated = DateTime.Today.AddMonths(-1);
+                configQuery.MinDateCreated = this._timeProvider.GetLocalNow().Date.AddMonths(-1);
             }
             
             if (config.MoreLikeThis)
@@ -329,7 +337,7 @@ namespace Jellyfin.Plugin.CinemaMode
 
         private void QueryTrailers(InternalItemsQuery query)
         {
-            IReadOnlyList<BaseItem> baseItems = Plugin.LibraryManager.GetItemList(query);
+            IReadOnlyList<BaseItem> baseItems = this._libraryManager.GetItemList(query);
             IEnumerable<Movie> moviesIter = baseItems.OfType<Movie>().Where(x => x.LocalTrailers.Count > 0);
 
             // TODO: Remove when jf team fixes min rating query
@@ -428,21 +436,25 @@ namespace Jellyfin.Plugin.CinemaMode
         private readonly Random _random = new Random();
 
         private readonly ILogger Logger;
+        private readonly ILibraryManager _libraryManager;
+        private readonly PluginConfiguration _config;
 
-        public IntroManager(ILogger logger)
+        public IntroManager(ILibraryManager libraryManager, PluginConfiguration config, ILogger logger)
         {
             this.Logger = logger;
+            this._libraryManager = libraryManager;
+            this._config = config;
         }
 
         public IEnumerable<IntroInfo> Get(BaseItem item, User user)
         {
 
-            if (Plugin.Instance.Configuration.TrailerPreRollsLibrary != "-")
+            if (this._config.TrailerPreRollsLibrary != "-")
             {
                 IntroInfo? trailerPreRoll = null;
                 try
                 {
-                    PreRollSelector preRollSelector = new PreRollSelector(PreRollType.TrailerPreRoll, item, user, Plugin.Instance.Configuration, this.Logger);
+                    PreRollSelector preRollSelector = new PreRollSelector(PreRollType.TrailerPreRoll, item, user, this._config, this._libraryManager, TimeProvider.System, this.Logger);
                     trailerPreRoll = preRollSelector.GetPreRoll();
                 }
                 catch (System.Exception e)
@@ -457,12 +469,12 @@ namespace Jellyfin.Plugin.CinemaMode
                 }
             }
 
-            if (Plugin.Instance.Configuration.NumberOfTrailers > 0)
+            if (this._config.NumberOfTrailers > 0)
             {
                 List<IntroInfo> trailers = new List<IntroInfo>();
                 try
                 {
-                    TrailerSelector trailerSelector = new TrailerSelector(item, user, Plugin.Instance.Configuration, this.Logger);
+                    TrailerSelector trailerSelector = new TrailerSelector(item, user, this._config, this._libraryManager, TimeProvider.System, this.Logger);
                     trailers = trailerSelector.GetTrailers().ToList();
                 }
                 catch (System.Exception e)
@@ -477,12 +489,12 @@ namespace Jellyfin.Plugin.CinemaMode
                 }
             }
 
-            if (Plugin.Instance.Configuration.FeaturePreRollsLibrary != "-")
+            if (this._config.FeaturePreRollsLibrary != "-")
             {
                 IntroInfo? featurePreRoll = null;
                 try
                 {
-                    PreRollSelector preRollSelector = new PreRollSelector(PreRollType.FeaturePreRoll, item, user, Plugin.Instance.Configuration, this.Logger);
+                    PreRollSelector preRollSelector = new PreRollSelector(PreRollType.FeaturePreRoll, item, user, this._config, this._libraryManager, TimeProvider.System, this.Logger);
                     featurePreRoll = preRollSelector.GetPreRoll();
                 }
                 catch (System.Exception e)

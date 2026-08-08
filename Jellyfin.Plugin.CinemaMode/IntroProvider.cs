@@ -27,7 +27,7 @@ namespace Jellyfin.Plugin.CinemaMode
                 return Task.FromResult(Enumerable.Empty<IntroInfo>());
             }
 
-            IntroManager introManager = new IntroManager(this.Logger);
+            IntroManager introManager = new IntroManager(Plugin.LibraryManager, Plugin.Instance.Configuration, this.Logger);
             return Task.FromResult(introManager.Get(item, user));
         }
 
