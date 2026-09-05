@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Jellyfin.Database.Implementations.Entities;
-using MediaBrowser.Model.Entities;
+using Jellyfin.Data.Entities;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Library;
@@ -17,6 +16,7 @@ namespace Jellyfin.Plugin.CinemaMode
 
     enum PreRollType
     {
+        Commercials,
         TrailerPreRoll,
         FeaturePreRoll,
     }
@@ -43,7 +43,15 @@ namespace Jellyfin.Plugin.CinemaMode
             this.User = User;
             this.Logger = logger;
 
-            if (Category == PreRollType.TrailerPreRoll)
+            if (Category == PreRollType.Commercials)
+            {
+                this.PreRollLibrary = Config.CommercialsLibrary;
+                this.PreRollsSelections = Config.CommercialsSelections;
+                this.EnforceRatingLimit = Config.CommercialsRatingLimit;
+                this.SeasonalTagDefinitions = Config.SeasonalTagDefinitions;
+                this.IgnoreOutOfSeason = Config.CommercialsIgnoreOutOfSeason;
+            }
+            else if (Category == PreRollType.TrailerPreRoll)
             {
                 this.PreRollLibrary = Config.TrailerPreRollsLibrary;
                 this.PreRollsSelections = Config.TrailerPreRollsSelections;
@@ -147,7 +155,7 @@ namespace Jellyfin.Plugin.CinemaMode
 
             if (this.EnforceRatingLimit)
             {
-                query.MaxParentalRating = this.Feature.GetParentalRatingScore();
+                query.MaxParentalRating = this.Feature.InheritedParentalRatingValue;
             }
 
             if (SelectionConfig == null)
@@ -216,29 +224,54 @@ namespace Jellyfin.Plugin.CinemaMode
             return items.OfType<Movie>().ToList();
         }
 
-        public IntroInfo? GetPreRoll()
+        public IEnumerable<IntroInfo> GetPreRolls(int numberOfPreRolls)
         {
+            if (numberOfPreRolls <= 0)
+            {
+                yield break;
+            }
+
+            HashSet<Guid> selectedPreRollIds = new HashSet<Guid>();
+            int returned = 0;
             List<Movie> preRolls;
             foreach (PreRollSelectionConfig SelectConfig in this.PreRollsSelections)
             {
                 preRolls = QueryPreRolls(SelectConfig);
-                if (preRolls.Count > 0) {
+                while (preRolls.Count > 0 && returned < numberOfPreRolls)
+                {
                     int idx = this.RNG.Next(preRolls.Count);
-                    Video preRoll = preRolls.ElementAt(idx);
-                    return new IntroInfo { ItemId = preRoll.Id, Path = preRoll.Path };
+                    Movie preRoll = preRolls[idx];
+                    preRolls.RemoveAt(idx);
+                    if (selectedPreRollIds.Add(preRoll.Id))
+                    {
+                        yield return new IntroInfo { ItemId = preRoll.Id, Path = preRoll.Path };
+                        returned++;
+                    }
+                }
+
+                if (returned == numberOfPreRolls)
+                {
+                    yield break;
                 }
             }
 
             preRolls = QueryPreRolls(null);
-            if (preRolls.Count > 0) {
+            while (preRolls.Count > 0 && returned < numberOfPreRolls)
+            {
                 int idx = this.RNG.Next(preRolls.Count);
-                Video preRoll = preRolls.ElementAt(idx);
-                return new IntroInfo { ItemId = preRoll.Id, Path = preRoll.Path };
+                Movie preRoll = preRolls[idx];
+                preRolls.RemoveAt(idx);
+                if (selectedPreRollIds.Add(preRoll.Id))
+                {
+                    yield return new IntroInfo { ItemId = preRoll.Id, Path = preRoll.Path };
+                    returned++;
+                }
             }
 
-            this.Logger.LogInformation($"|jellyfin-cinema-mode| No Pre-Rolls Type: {this.Category} User: {this.User}");
-            return null;
-
+            if (returned == 0)
+            {
+                this.Logger.LogInformation($"|jellyfin-cinema-mode| No Pre-Rolls Type: {this.Category} User: {this.User}");
+            }
         }
     }
 
@@ -276,13 +309,16 @@ namespace Jellyfin.Plugin.CinemaMode
             baseQuery.ExcludeItemIds = this.ShownTrailers.ToArray();
 
             if (this.Config.EnforceRatingLimitTrailers)
-            {
-                baseQuery.HasOfficialRating = true;
-                baseQuery.HasParentalRating = true;
-                baseQuery.MinParentalRating = new ParentalRatingScore(0, 0);
-                baseQuery.MaxParentalRating = this.Feature.GetParentalRatingScore();
-            }
-
+                {
+                    baseQuery.HasOfficialRating = true;
+                    baseQuery.HasParentalRating = true;
+                    
+                    // Für Jellyfin 10.10.7 weisen wir hier einfach die Zahl 0 zu statt des neuen Objekts
+                    baseQuery.MinParentalRating = 0; 
+                    
+                    baseQuery.MaxParentalRating = this.Feature.InheritedParentalRatingValue;
+                }
+                
             baseQuery.IsPlayed = IsPlayed;
 
             return baseQuery;
@@ -437,13 +473,33 @@ namespace Jellyfin.Plugin.CinemaMode
         public IEnumerable<IntroInfo> Get(BaseItem item, User user)
         {
 
+            if (Plugin.Instance.Configuration.CommercialsLibrary != "-" && Plugin.Instance.Configuration.NumberOfCommercials > 0)
+            {
+                List<IntroInfo> commercials = new List<IntroInfo>();
+                try
+                {
+                    PreRollSelector preRollSelector = new PreRollSelector(PreRollType.Commercials, item, user, Plugin.Instance.Configuration, this.Logger);
+                    commercials = preRollSelector.GetPreRolls(Plugin.Instance.Configuration.NumberOfCommercials).ToList();
+                }
+                catch (System.Exception e)
+                {
+                    this.Logger.LogError("|jellyfin-cinema-mode| Exception encountered fetching Commercials");
+                    this.Logger.LogError(e.StackTrace);
+                }
+
+                foreach (IntroInfo commercial in commercials)
+                {
+                    yield return commercial;
+                }
+            }
+
             if (Plugin.Instance.Configuration.TrailerPreRollsLibrary != "-")
             {
                 IntroInfo? trailerPreRoll = null;
                 try
                 {
                     PreRollSelector preRollSelector = new PreRollSelector(PreRollType.TrailerPreRoll, item, user, Plugin.Instance.Configuration, this.Logger);
-                    trailerPreRoll = preRollSelector.GetPreRoll();
+                    trailerPreRoll = preRollSelector.GetPreRolls(1).FirstOrDefault();
                 }
                 catch (System.Exception e)
                 {
@@ -483,7 +539,7 @@ namespace Jellyfin.Plugin.CinemaMode
                 try
                 {
                     PreRollSelector preRollSelector = new PreRollSelector(PreRollType.FeaturePreRoll, item, user, Plugin.Instance.Configuration, this.Logger);
-                    featurePreRoll = preRollSelector.GetPreRoll();
+                    featurePreRoll = preRollSelector.GetPreRolls(1).FirstOrDefault();
                 }
                 catch (System.Exception e)
                 {

@@ -61,32 +61,42 @@ namespace Jellyfin.Plugin.CinemaMode.Configuration
 
     public class PluginConfiguration : BasePluginConfiguration
     {
+        public string CommercialsLibrary { get; set; }
         public string TrailerPreRollsLibrary { get; set; }
         public string FeaturePreRollsLibrary { get; set; }
+        public List<PreRollSelectionConfig> CommercialsSelections { get; set; }
         public List<PreRollSelectionConfig> FeaturePreRollsSelections { get; set; }
         public List<PreRollSelectionConfig> TrailerPreRollsSelections { get; set; }
+        public bool CommercialsRatingLimit { get; set; }
         public bool TrailerPreRollsRatingLimit { get; set; }
         public bool FeaturePreRollsRatingLimit { get; set; }
+        public bool CommercialsIgnoreOutOfSeason { get; set; }
         public bool TrailerPreRollsIgnoreOutOfSeason { get; set; }
         public bool FeaturePreRollsIgnoreOutOfSeason { get; set; }
         public List<SeasonalTagDefinition> SeasonalTagDefinitions { get; set; }
         public List<TrailerSelectionConfig> TrailerSelectionRules { get; set; }
         public bool EnforceRatingLimitTrailers { get; set; }
+        public int NumberOfCommercials { get; set; }
         public int NumberOfTrailers { get; set; }
         public bool TrailerConsumeMode { get; set; }
 
         public PluginConfiguration()
         {
+            CommercialsLibrary = "-";
             TrailerPreRollsLibrary = "-";
             FeaturePreRollsLibrary = "-";
+            CommercialsSelections = new List<PreRollSelectionConfig>();
             TrailerPreRollsSelections = new List<PreRollSelectionConfig>();
             FeaturePreRollsSelections = new List<PreRollSelectionConfig>();
+            CommercialsRatingLimit = true;
             TrailerPreRollsRatingLimit = true;
             FeaturePreRollsRatingLimit = true;
+            CommercialsIgnoreOutOfSeason = true;
             TrailerPreRollsIgnoreOutOfSeason = true;
             FeaturePreRollsIgnoreOutOfSeason = true;
             SeasonalTagDefinitions = new List<SeasonalTagDefinition>();
             TrailerSelectionRules = new List<TrailerSelectionConfig>();
+            NumberOfCommercials = 1;
             NumberOfTrailers = 2;
             EnforceRatingLimitTrailers = true;
             TrailerConsumeMode = false;
