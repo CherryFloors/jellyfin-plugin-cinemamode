@@ -22,7 +22,7 @@ section of the dashboard, click the plus sign to add a new repository. You can g
 but be sure to paste the following URL in the 'Repository URL' field exactly as it appears:
 
 ```
-https://raw.githubusercontent.com/CherryFloors/jellyfin-plugin-cinemamode/main/manifest.json
+https://raw.githubusercontent.com/RURon/jellyfin-plugin-cinemamodpluse/main/manifest.json
 ```
 
 Now that you have added the repository, click on the Catalog section at the top of the screen. Under General, you
@@ -36,7 +36,7 @@ plenty of great tutorial videos for setting up Jellyfin, including how to instal
 ## User Guide
 
 <p align="center">
-<img alt="Plugin Diagram" src="https://github.com/CherryFloors/jellyfin-plugin-cinemamode/raw/main/Jellyfin.Plugin.CinemaMode/Images/cinema-mode-diagram.png"/>
+<img alt="Plugin Diagram" src="https://github.com/RURon/jellyfin-plugin-cinemamodpluse/raw/main/Jellyfin.Plugin.CinemaMode/Images/cinema-mode-diagram.png"/>
 </p>
 
 The plugin is designed to enable Jellyfin's Cinema Mode with **local** content. Trailers stored alongside movies (as
