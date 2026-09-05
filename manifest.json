@@ -9,7 +9,7 @@
         "imageUrl": "https://github.com/RURon/jellyfin-plugin-cinemamodpluse/raw/main/Jellyfin.Plugin.CinemaMode/Images/jellyfin-plugin-cinemamode.jpg",
         "versions": [
             {
-                "checksum": "4df3efb4098438472ff1373f78ace427",
+                "checksum": "4E4110297DD0AA81E6EA002A030209C8",
                 "changelog": "- Based on 0.6.0.0 but had to revert API to run on my older Jellyfin. Adds a commercials section in front.\\n\n",
                 "targetAbi": "10.10.0.0",
                 "sourceUrl": "https://github.com/RURon/jellyfin-plugin-cinemamodpluse/releases/download/v0.6.0.1/cinemamode_0.6.0.1.zip",
