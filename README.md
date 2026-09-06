@@ -36,7 +36,7 @@ plenty of great tutorial videos for setting up Jellyfin, including how to instal
 ## User Guide
 
 <p align="center">
-<img alt="Plugin Diagram" src="https://github.com/RURon/jellyfin-plugin-cinemamodpluse/raw/main/Jellyfin.Plugin.CinemaMode/Images/cinema-mode-diagram.png"/>
+<img alt="Plugin Diagram" src="https://github.com/RURon/jellyfin-plugin-cinemamodpluse/raw/main/Jellyfin.Plugin.CinemaMode/Images/cinema-mode-diagram.png" style="max-width: 100%; background-color: black;"/>
 </p>
 
 The plugin is designed to enable Jellyfin's Cinema Mode with **local** content. Trailers stored alongside movies (as
