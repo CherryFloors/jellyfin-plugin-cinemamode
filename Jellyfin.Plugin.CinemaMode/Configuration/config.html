@@ -15,22 +15,78 @@
                     <div class="verticalSection">
                         <p>
                             This plugin allows users to enable Jellyfin's Cinema Mode functionality to play intro
-                            content before movies. The plugin supports three types of intros: Trailer Pre-Rolls,
+                            content before movies. The plugin supports four types of intros: Commercials, Trailer Pre-Rolls,
                             Trailers, and Feature Pre-Rolls. Each of these can be configured/turned off in the sections 
                             below. All of this can be disabled at the user level by turning off Cinema Mode in the users 
                             Playback settings. For more information, access the user guide via the above help button. 
                             Pro-tip: Skip any pre-roll or trailer by pressing the next button in the player.
                         </p>
                         <div>
-                            <img alt="Cinema Mode Diagram" width="800" height="auto" src="https://github.com/CherryFloors/jellyfin-plugin-cinemamode/raw/main/Jellyfin.Plugin.CinemaMode/Images/cinema-mode-diagram.png"/>
+                            <img alt="Cinema Mode Diagram" width="800" height="auto" src="https://github.com/RURon/jellyfin-plugin-cinemamodpluse/raw/main/Jellyfin.Plugin.CinemaMode/Images/cinema-mode-diagram.png"/>
                             <div class="fieldDescription">
-                                Diagram illustrating the order in which the three intro types (Trailer Pre-Rolls,
+                                Diagram illustrating the order in which the four intro types (Commercials, Trailer Pre-Rolls,
                                 Trailers, and Feature Pre-Rolls) will be shown
                             </div>
                         </div>
                         <br/>
                     </div>
                     
+                    <!-- Commercials -->
+                    <fieldset class="verticalSection verticalSection-extrabottompadding">
+                        <legend>
+                            <h3 class="sectionTitle">Commercials</h3>
+                        </legend>
+                        <div class="selectContainer selectLibrary flex-shrink-zero">
+                            <label class="selectLabel" for="commercialsLibrarySelect">Commercials Library</label>
+                            <select is="emby-select" class="emby-select-withcolor emby-select" label="" id="commercialsLibrarySelect">
+                            </select>
+                            <div class="selectArrowContainer">
+                                <div style="visibility:hidden;display:none;">0</div>
+                                <span class="selectArrow material-icons keyboard_arrow_down" aria-hidden="true"></span>
+                            </div>
+                            <div class="fieldDescription">
+                                Library containing media to play before trailer pre-rolls. Setting this to "-" will
+                                disable this section.
+                            </div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="number-commercials">Number of Commercials</label>
+                            <input type="number" id="number-commercials" name="number-commercials" min="0" is="emby-input" />
+                            <div class="fieldDescription">
+                                The number of commercials to play. Setting this to 0 will turn this section off.
+                            </div>
+                        </div>
+                        <div class="sectionTitleContainer flex align-items-center">
+                            <h4 class="sectionTitle">Selection Rules</h4>
+                            <button onclick="addPreRollRule('commercials-rules')" is="emby-button" type="button" class="fab emby-button" style="margin-left:1em" title="Add">
+                                <span class="material-icons add" aria-hidden="true"></span>
+                            </button>
+                            <a is="emby-linkbutton" rel="noopener noreferrer" class="raised button-alt headerHelpButton emby-button" target="_blank" href="https://github.com/CherryFloors/jellyfin-plugin-cinemamode#pre-rolls">
+                                Help
+                            </a>
+                        </div>
+                        <div class="paperList folderList" id="commercials-rules" style="margin-bottom:2em">
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="ignore-out-of-season-commercials" name="ignore-out-of-season-commercials" />
+                                <span>Ignore Out Of Season</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Ignore any commercial that has a seasonal tag not currently in season.
+                            </div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="enforce-rating-limit-commercials" name="enforce-rating-limit-commercials" />
+                                <span>Enforce Rating Limit</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Commercials assigned a rating will not be selected if they exceed the feature's rating.
+                            </div>
+                        </div>
+                    </fieldset>
+
                     <!-- Pre Roll: Trailers -->
                     <fieldset class="verticalSection verticalSection-extrabottompadding">
                         <legend>
@@ -472,7 +528,9 @@
             $('.cinemaModeConfigurationPage').on('pageshow', function () {
                 Dashboard.showLoadingMsg();
                 clearList('trailerPreRollLibrarySelect');
+                clearList('commercialsLibrarySelect');
                 clearList('featurePreRollLibrarySelect');
+                clearList('commercials-rules');
                 clearList('trailer-pre-roll-rules');
                 clearList('feature-pre-roll-rules');
                 clearList('trailer-rules');
@@ -480,15 +538,20 @@
                 var page = this;
                 ApiClient.getPluginConfiguration(pluginId).then(function (config) {
                     $('#number-trailers', page).val(config.NumberOfTrailers);
+                    $('#number-commercials', page).val(config.NumberOfCommercials);
                     document.getElementById('enforce-rating-limit-trailers').checked = config.EnforceRatingLimitTrailers;
+                    initLibrarySelector('commercialsLibrarySelect', config.CommercialsLibrary, config.CommercialsLibrary);
                     initLibrarySelector('trailerPreRollLibrarySelect', config.TrailerPreRollsLibrary, config.TrailerPreRollsLibrary);
                     initLibrarySelector('featurePreRollLibrarySelect', config.FeaturePreRollsLibrary, config.FeaturePreRollsLibrary);
+                    initPreRollRules('commercials-rules', config.CommercialsSelections);
                     initPreRollRules('trailer-pre-roll-rules', config.TrailerPreRollsSelections);
                     initPreRollRules('feature-pre-roll-rules', config.FeaturePreRollsSelections);
 
                     document.getElementById('enforce-rating-limit-trailer-pre-rolls').checked = config.TrailerPreRollsRatingLimit;
+                    document.getElementById('enforce-rating-limit-commercials').checked = config.CommercialsRatingLimit;
                     document.getElementById('enforce-rating-limit-feature-pre-rolls').checked = config.FeaturePreRollsRatingLimit;
                     document.getElementById('ignore-out-of-season-trailer-pre-rolls').checked = config.TrailerPreRollsIgnoreOutOfSeason;
+                    document.getElementById('ignore-out-of-season-commercials').checked = config.CommercialsIgnoreOutOfSeason;
                     document.getElementById('ignore-out-of-season-feature-pre-rolls').checked = config.FeaturePreRollsIgnoreOutOfSeason;
                     document.getElementById('trailer-rules-consume-mode').checked = config.TrailerConsumeMode;
 
@@ -502,21 +565,28 @@
                 Dashboard.showLoadingMsg();
 
                 var TrailerPreRollsLibrary = $('#trailerPreRollLibrarySelect').val();
+                var CommercialsLibrary = $('#commercialsLibrarySelect').val();
                 var FeaturePreRollsLibrary = $('#featurePreRollLibrarySelect').val();
                 var NumberOfTrailers = $('#number-trailers').val();
+                var NumberOfCommercials = $('#number-commercials').val();
                 ApiClient.getPluginConfiguration(pluginId).then(function (config) {
 
                     config.TrailerPreRollsLibrary = TrailerPreRollsLibrary;
+                    config.CommercialsLibrary = CommercialsLibrary;
                     config.FeaturePreRollsLibrary = FeaturePreRollsLibrary;
+                    config.CommercialsSelections = getPreRollRules('commercials-rules');
                     config.TrailerPreRollsSelections = getPreRollRules('trailer-pre-roll-rules');
                     config.FeaturePreRollsSelections = getPreRollRules('feature-pre-roll-rules');
                     config.TrailerPreRollsRatingLimit = document.getElementById('enforce-rating-limit-trailer-pre-rolls').checked;
+                    config.CommercialsRatingLimit = document.getElementById('enforce-rating-limit-commercials').checked;
                     config.FeaturePreRollsRatingLimit = document.getElementById('enforce-rating-limit-feature-pre-rolls').checked;
                     config.TrailerPreRollsIgnoreOutOfSeason = document.getElementById('ignore-out-of-season-trailer-pre-rolls').checked;
+                    config.CommercialsIgnoreOutOfSeason = document.getElementById('ignore-out-of-season-commercials').checked;
                     config.FeaturePreRollsIgnoreOutOfSeason = document.getElementById('ignore-out-of-season-feature-pre-rolls').checked;
                     config.SeasonalTagDefinitions = getSeasonalTagDefs();
                     config.TrailerSelectionRules = getTrailerRules();
                     config.NumberOfTrailers = parseInt(NumberOfTrailers);
+                    config.NumberOfCommercials = parseInt(NumberOfCommercials);
                     config.EnforceRatingLimitTrailers = document.getElementById('enforce-rating-limit-trailers').checked;
                     config.TrailerConsumeMode = document.getElementById('trailer-rules-consume-mode').checked;
 

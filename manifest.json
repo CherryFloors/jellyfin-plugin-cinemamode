@@ -6,71 +6,15 @@
         "description": "Enable Cinema Mode with local trailers and pre-rolls.",
         "owner": "CherryFloors",
         "overview": "Enable Jellyfin's Cinema Mode",
-        "imageUrl": "https://github.com/CherryFloors/jellyfin-plugin-cinemamode/raw/main/Jellyfin.Plugin.CinemaMode/Images/jellyfin-plugin-cinemamode.jpg",
+        "imageUrl": "https://github.com/RURon/jellyfin-plugin-cinemamodpluse/raw/main/Jellyfin.Plugin.CinemaMode/Images/jellyfin-plugin-cinemamode.jpg",
         "versions": [
             {
-                "checksum": "9dd5610f5216745d9b57c2abae13441b",
-                "changelog": "- Target Jellyfin 10.11 ABI and fix broken API.\n- Update \"More Like This\" trailer selection.\n",
-                "targetAbi": "10.11.0.0",
-                "sourceUrl": "https://github.com/CherryFloors/jellyfin-plugin-cinemamode/releases/download/v0.6.0.0/cinemamode_0.6.0.0.zip",
-                "timestamp": "2025-10-25T00:04:04.332083",
-                "version": "0.6.0.0"
-            },
-            {
-                "checksum": "4df3efb4098438472ff1373f78ace427",
-                "changelog": "- New exclude out of season tags for pre-rolls logic that supports multiple out of season tags.\\n - Fix trailer rating enforcement to ignore \"Unrated\" and blank ratings.\\n - Target Jellyfin 10.10 ABI.\\n\n",
+                "checksum": "4E4110297DD0AA81E6EA002A030209C8",
+                "changelog": "- Based on 0.6.0.0 but had to revert API to run on my older Jellyfin. Adds a commercials section in front.\\n\n",
                 "targetAbi": "10.10.0.0",
-                "sourceUrl": "https://github.com/CherryFloors/jellyfin-plugin-cinemamode/releases/download/v0.5.1.0/cinemamode_0.5.1.0.zip",
-                "timestamp": "2025-04-26T16:51:15.224959",
-                "version": "0.5.1.0"
-            },
-            {
-                "checksum": "e65a5c7471acb68b0d32e98c7b53cf89",
-                "changelog": "- New exclude out of season tags for pre-rolls logic that supports multiple out of season tags. - Fix trailer rating enforcement to ignore \"Unrated\" and blank ratings. - Target Jellyfin 10.10 ABI\n",
-                "targetAbi": "10.10.0.0",
-                "sourceUrl": "https://github.com/CherryFloors/jellyfin-plugin-cinemamode/releases/download/v0.5.0.0/cinemamode_0.5.0.0.zip",
-                "timestamp": "2025-04-26T16:18:40.615368",
-                "version": "0.5.0.0"
-            },
-            {
-                "checksum": "898bfa0ecfcc6ac0b1c5ffc10938c2d7",
-                "changelog": "Stable Pre-Roll support and exapanded configuration\n",
-                "targetAbi": "10.9.0.0",
-                "sourceUrl": "https://github.com/CherryFloors/jellyfin-plugin-cinemamode/releases/download/v0.4.0.0/cinemamode_0.4.0.0.zip",
-                "timestamp": "2024-08-01T21:42:16.152778",
-                "version": "0.4.0.0"
-            },
-            {
-                "checksum": "c4192aa5f6d8434d318d5a80be35a72b",
-                "changelog": "Initial Release\n",
-                "targetAbi": "10.9.0.0",
-                "sourceUrl": "https://github.com/CherryFloors/jellyfin-plugin-cinemamode/releases/download/v0.3.0.0/cinemamode_0.3.0.0.zip",
-                "timestamp": "2024-05-19T14:59:05.278450",
-                "version": "0.3.0.0"
-            },
-            {
-                "checksum": "3459c28435f14a61661754c4ad37d049",
-                "changelog": "Initial Release\n",
-                "targetAbi": "10.8.0.0",
-                "sourceUrl": "https://github.com/CherryFloors/jellyfin-plugin-cinemamode/releases/download/v0.2.0.0/cinemamode_0.2.0.0.zip",
-                "timestamp": "2023-07-30T11:08:21.449187",
-                "version": "0.2.0.0"
-            },
-            {
-                "checksum": "2008597b8f0d5fa03a9bfec09309bda1",
-                "changelog": "Fix trailer count\n",
-                "targetAbi": "10.8.0.0",
-                "sourceUrl": "https://github.com/CherryFloors/jellyfin-plugin-cinemamode/releases/download/v0.1.1.0/cinemamode_0.1.1.0.zip",
-                "timestamp": "2023-02-19T12:00:01.266521",
-                "version": "0.1.1.0"
-            },
-            {
-                "checksum": "168963b809bde54f1401aa617105118e",
-                "changelog": "Initial Release\n",
-                "targetAbi": "10.8.0.0",
-                "sourceUrl": "https://github.com/CherryFloors/jellyfin-plugin-cinemamode/releases/download/v0.1.0.0/cinemamode_0.1.0.0.zip",
-                "timestamp": "2023-02-14T22:03:04.894088",
-                "version": "0.1.0.0"
+                "sourceUrl": "https://github.com/RURon/jellyfin-plugin-cinemamodpluse/releases/download/v0.6.0.1/cinemamode_0.6.0.1.zip",
+                "timestamp": "2026-09-05T16:51:15.224959",
+                "version": "0.6.0.1"
             }
         ]
     }

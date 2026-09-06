@@ -22,7 +22,7 @@ section of the dashboard, click the plus sign to add a new repository. You can g
 but be sure to paste the following URL in the 'Repository URL' field exactly as it appears:
 
 ```
-https://raw.githubusercontent.com/CherryFloors/jellyfin-plugin-cinemamode/main/manifest.json
+https://raw.githubusercontent.com/RURon/jellyfin-plugin-cinemamodpluse/main/manifest.json
 ```
 
 Now that you have added the repository, click on the Catalog section at the top of the screen. Under General, you
@@ -36,7 +36,7 @@ plenty of great tutorial videos for setting up Jellyfin, including how to instal
 ## User Guide
 
 <p align="center">
-<img alt="Plugin Diagram" src="https://github.com/CherryFloors/jellyfin-plugin-cinemamode/raw/main/Jellyfin.Plugin.CinemaMode/Images/cinema-mode-diagram.png"/>
+<img alt="Plugin Diagram" src="https://github.com/RURon/jellyfin-plugin-cinemamodpluse/raw/main/Jellyfin.Plugin.CinemaMode/Images/cinema-mode-diagram.png"/>
 </p>
 
 The plugin is designed to enable Jellyfin's Cinema Mode with **local** content. Trailers stored alongside movies (as
@@ -53,10 +53,11 @@ Jellyfin does not currently have a "Pre-Rolls" content type so the "Movies" cont
 supports playback of Pre-Rolls organized in libraries of this content type. The "Movies" content type allows for adding
 metadata (Tags, Genre, Studios) to apply [Selection Rules](#selection-rules) based on the feature they will play before.
 
-The plugin supports two types of Pre-Rolls, 'Trailer Pre-Roll' and 'Feature Pre-Roll'. The 'Trailer Pre-Roll' type is
-meant to play prior to a block of trailers (think "Now playing on Jellyfin"). The 'Feature Pre-Roll' type is meant
-to be the last intro played right before the movie (think "Now your feature presentation"). It is recommended that two
-different libraries are used for storage, one for 'Trailer Pre-Rolls' and one for 'Feature Pre-Rolls'.
+The plugin supports three types of Pre-Rolls: 'Commercials', 'Trailer Pre-Roll', and 'Feature Pre-Roll'. Commercials
+play first, followed by the Trailer Pre-Roll, the block of trailers, and finally the Feature Pre-Roll. The number of
+commercials to play can be configured independently and is limited to the number of eligible commercials available.
+This allows commercial content to be kept separate from trailer pre-rolls while using the same metadata-based selection rules.
+It is recommended that separate libraries are used for each Pre-Roll type.
 
 #### Pre-Roll Library
 
